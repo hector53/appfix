@@ -80,7 +80,7 @@ class MainTask():
             contador = 0
             while not self.stopCola.is_set():
                 contador+=1
-                if contador>=600:
+                if contador>=300:
                     await self.consultar_balances_en_cuentas()
                     contador=0
                 await asyncio.sleep(0.1)

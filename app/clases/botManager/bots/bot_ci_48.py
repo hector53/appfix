@@ -287,11 +287,7 @@ class botCi48(taskSeqManager):
                         self.marcar_completada(task)
                         await self.execute_task(task)
                         self.log.info(f"se completo la tarea: {task}")
-                    else:
-                        self.log.info(f"el bot no tiene tareas")
-                else:
-                    self.log.info(f"el bot esta en pause")
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.01)
             #    self.log.info(f"sin task en la cola del bot: {self.id}")
         except Exception as e:
             self.log.error(
