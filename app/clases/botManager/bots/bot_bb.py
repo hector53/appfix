@@ -185,9 +185,9 @@ class botBB(taskSeqManager):
                 return
             mean = statistics.mean(close_prices)
             std = statistics.stdev(close_prices)
-            upper = mean + (std * self.maximum_arbitrage_rate)
+            upper = mean + (std * self.maximum_arbitrage_rate) + 0.05
             self.upperBB = upper
-            lower = mean - (std * self.minimum_arbitrage_rate)
+            lower = mean - (std * self.minimum_arbitrage_rate) - 0.05
             self.lowerBB = lower
             self.log.info(f"upper: {upper}")
             self.log.info(f"lower: {lower}")
@@ -295,16 +295,15 @@ class botBB(taskSeqManager):
                 #   self.log.info("estoy en el ciclo inifito del bot")
                 if self.paused.is_set():
                     self.log.info(f"el bot no esta en pause")
-                    if self.botData["soloEscucharMercado"] == False:
-                        task = await self.obtener_tarea()
-                        if task is not None:
-                            self.log.info(f"el bot tiene tareas")
-                            self.log.info(f" se va ejecutar esta tarea: {task}")
-                            self.marcar_completada(task)
-                            await self.execute_task(task)
-                            self.log.info(f"se completo la tarea: {task}")
-                        else:
-                            self.log.info(f"el bot no tiene tareas")
+                    task = await self.obtener_tarea()
+                    if task is not None:
+                        self.log.info(f"el bot tiene tareas")
+                        self.log.info(f" se va ejecutar esta tarea: {task}")
+                        self.marcar_completada(task)
+                        await self.execute_task(task)
+                        self.log.info(f"se completo la tarea: {task}")
+                    else:
+                        self.log.info(f"el bot no tiene tareas")
                 else:
                     self.log.info(f"el bot esta en pause")
                 await asyncio.sleep(0.1)
