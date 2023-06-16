@@ -9,6 +9,10 @@ from app.controllers import *
 app.add_url_rule('/api/iniciar_fix/new', view_func=FixController.iniciar_fix_new, methods=['POST'] )
 app.add_url_rule('/api/detener_fix/new', view_func=FixController.detener_fix_new, methods=['POST'] )
 app.add_url_rule('/api/get_securitys', view_func=FixController.get_securitys, methods=['POST'] )
+
+app.add_url_rule('/api/get_all_orders', view_func=FixController.get_all_orders, methods=['POST'] )
+
+
 app.add_url_rule('/api/new_order_manual', view_func=FixController.newOrderTest, methods=['POST'] )
 app.add_url_rule('/api/suscribir_mercado', view_func=FixController.suscribir_mercado, methods=['POST'] )
 app.add_url_rule('/api/get_positions', view_func=FixController.get_positions, methods=['POST'] )

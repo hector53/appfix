@@ -4,7 +4,7 @@ from app import  ObjectId, mongo, logging, sesionesFix, time
 from app import config_fix_settings
 from app.models import DbUtils
 from app.controllers.utils import UtilsController
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from app.clases.class_main import MainTask
 import asyncio
 from threading import Thread
@@ -353,6 +353,20 @@ class FixController:
             print("noexiste pero actualizadmos en db")
             await DbUtils.update_fix_session_mongo(id_user, 0)
             return {"status": False}
+        
+    def get_all_orders():
+        print("hola get_all_orders")
+        fecha_actual=datetime.today()
+        # Agregar 4 horas a la fecha actual
+        fecha_actual_mas_4h=fecha_actual + timedelta(hours=4)
+        # Convertir la fecha a un formato legible
+        fecha_actual_mas_4h_str=fecha_actual_mas_4h.strftime(
+        "%Y%m%d")
+        ordenesToda=mongo.db.ordenes.find({
+        "transactTime": {"$regex": f"^{fecha_actual_mas_4h_str}"}
+        }, {"_id": 0})
+
+        return jsonify(list(ordenesToda))
     
     def get_securitys():
         from app import fixM
@@ -377,11 +391,15 @@ class FixController:
             while True: 
                 time.sleep(0.1)
             #   log.info(f"esperando seguridad {sesionesFix[id_fix].application.securitySegments}")
-                if "DDA" in fixM.main_tasks[id_fix].application.securitySegments and "DDF" in fixM.main_tasks[id_fix].application.securitySegments and "MERV" in fixM.main_tasks[id_fix].application.securitySegments and "DUAL" in fixM.main_tasks[id_fix].application.securitySegments:
+            #"MERV" in fixM.main_tasks[id_fix].application.securitySegments
+                if "DDA" in fixM.main_tasks[id_fix].application.securitySegments and "DDF" in fixM.main_tasks[id_fix].application.securitySegments  and "DUAL" in fixM.main_tasks[id_fix].application.securitySegments:
                     break
+            print("saliendo de ciclo securitys, enviando a guardar en db")
             time.sleep(1)
             securitys_data = UtilsController.fetch_securitys_data(id_fix)
+            log.info(f"ahora a guardar los securitys")
             UtilsController.guardar_security_in_fix(securitys_data, id_fix)
+            log.info(f"ahora guardar en db")
             document = {
             "date": str(today),
             "account_type": account_type,

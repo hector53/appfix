@@ -123,18 +123,13 @@ class FixManualController:
         else:
             abort(make_response(jsonify(message="manual no activo"), 401))
 
-    def manua_mass_status(id):
+    async def manua_mass_status(id):
+        from app import fixM
         id_fix = id
         cuenta = request.args.get('cuenta', '')
-        if 0 in sesionesFix[id_fix].application.triangulos:
-            clientR = sesionesFix[id_fix].application.triangulos[0].clientR
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            response = loop.run_until_complete(clientR.mass_status_request("1", 7, cuenta))
-            loop.close()
-            return response
-        else:
-            abort(make_response(jsonify(message="manual no activo"), 401))
+        await fixM.main_tasks[id_fix].application.orderMassStatusRequest(
+                "1", 7, cuenta)
+        return jsonify({"status":True})
 
     def manual_get_trades():
         req_obj = request.get_json()
