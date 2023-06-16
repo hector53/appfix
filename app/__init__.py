@@ -16,7 +16,6 @@ from app.clases.fixManager import fixManager
 from app.WebSocket.webSocketGeneral import socketServerGeneral
 
 
-serverGeneral = socketServerGeneral('127.0.0.1', 4000)
 
 
 logging.basicConfig(filename=f'reports.log', level=logging.INFO,

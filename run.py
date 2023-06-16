@@ -1,8 +1,6 @@
-from app import app, serverGeneral
+from app import app
 
 if __name__ == '__main__':
-    serverGeneral.daemon = True
-    serverGeneral.start()
     app.run(port=5000)
 
     
