@@ -6,82 +6,68 @@ class FixManualController:
     @staticmethod
 
     def get_fix_manual_data(id):
+        from app import fixM
         id_fix = id
         response = {
             "status": False,
             "msg": "fix no activo",
             "isFixManualActive": False,
-            "ordenes": [],
         }
-        if id_fix in sesionesFix:
+        if id_fix in fixM.main_tasks:
             #ver si bot manual esta activo 
-            isFixManualActive = False 
-            if 0 in sesionesFix[id_fix].application.triangulos:
-                isFixManualActive = True
-            #buscar todas las ordenes de fix manual
-            arrayOrdenes = []
-            fecha_hoy = datetime.today().date()
-            fecha_formateada = fecha_hoy.strftime("%Y-%m-%d")
-            #arrayOrdenes = get_ordenes_bot_manual(0, fecha_formateada)
+            isFixManualActive = True
             response = {
                 "status": True,
                 "msg": "fix activo",
                 "isFixManualActive": isFixManualActive,
-                "ordenes": arrayOrdenes
             }
         return jsonify(response)
 
-    def new_order_manual():
+    async def new_order_manual():
+        from app import fixM
         req_obj = request.get_json()
         print(req_obj)
         id_fix = req_obj['id_fix']
         order = req_obj['order']
-        if 0 in sesionesFix[id_fix].application.triangulos:
-            clientR = sesionesFix[id_fix].application.triangulos[0].clientR
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            response = loop.run_until_complete(clientR.nueva_orden_manual(order["symbol"], order["side"], order["size"], order["price"], order["type"]))
-            loop.close()
+        if id_fix in fixM.main_tasks:
+            cuenta = fixM.main_tasks[id_fix].account
+            response = await fixM.main_tasks[id_fix].application.nueva_orden_manual(order["symbol"], order["side"], order["size"], order["price"], order["type"], cuenta)
             return response
         else:
             abort(make_response(jsonify(message="manual no activo"), 401))
 
-    def manual_edit_order():
+    async def manual_edit_order():
+        from app import fixM
         req_obj = request.get_json()
         print(req_obj)
         id_fix = req_obj['id_fix']
         typeRequest = int(req_obj['typeRequest'])
         orden = req_obj['orden']
-        if 0 in sesionesFix[id_fix].application.triangulos:
+        if id_fix in fixM.main_tasks:
             sideOrder = 1 if orden["side"] == "Buy" else 2
-            clientR = sesionesFix[id_fix].application.triangulos[0].clientR
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            cuenta = fixM.main_tasks[id_fix].account
             if typeRequest == 1:
-                response = loop.run_until_complete(clientR.modificar_orden_manual(orderId=orden["orderId"],
+                response = await fixM.main_tasks[id_fix].application.modificar_orden_manual(orderId=orden["orderId"],
                         origClOrdId=orden["clOrdId"], side=sideOrder, orderType=2, symbol=orden["symbol"],
-                        quantity=orden["size"], price=orden["price"], sizeViejo=orden["sizeViejo"]))
+                        quantity=orden["size"], price=orden["price"], sizeViejo=orden["sizeViejo"], cuenta=cuenta)
             elif typeRequest == 2:
-                response = loop.run_until_complete(clientR.modificar_orden_manual_2(orderId=orden["orderId"],
+                response = await fixM.main_tasks[id_fix].application.modificar_orden_manual_2(orderId=orden["orderId"],
                         origClOrdId=orden["clOrdId"], side=sideOrder, orderType=2, symbol=orden["symbol"],
-                        quantity=orden["size"], price=orden["price"]))
-            loop.close()
+                        quantity=orden["size"], price=orden["price"], cuenta=cuenta)
             return response
         else:
             abort(make_response(jsonify(message="manual no activo"), 401))
 
-    def manual_cancel_orden():
+    async def manual_cancel_orden():
+        from app import fixM
         req_obj = request.get_json()
         print(req_obj)
         id_fix = req_obj['id_fix']
         orden = req_obj['orden']
-        if 0 in sesionesFix[id_fix].application.triangulos:
+        if id_fix in fixM.main_tasks:
+            cuenta = fixM.main_tasks[id_fix].account
             sideOrder = 1 if orden["side"] == "Buy" else 2
-            clientR = sesionesFix[id_fix].application.triangulos[0].clientR
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            response = loop.run_until_complete(clientR.cancelar_orden_manual(orden["orderId"], orden["clOrdId"], sideOrder, orden["leavesQty"], orden["symbol"]))
-            loop.close()
+            response = await fixM.main_tasks[id_fix].application.cancelar_orden_manual(orden["orderId"], orden["clOrdId"], sideOrder, orden["orderQty"], orden["symbol"], cuenta)
             return response
         else:
             abort(make_response(jsonify(message="manual no activo"), 401))
@@ -95,31 +81,25 @@ class FixManualController:
         await fixM.main_tasks[id_fix].application.orderMassCancelRequest(marketSegment=marketSegment)
         return jsonify({"status":True})
 
-    def manua_get_posiciones(id):
+    async def manua_get_posiciones(id):
+        from app import fixM
         id_fix = id
         cuenta = request.args.get('cuenta', '')
-        if 0 in sesionesFix[id_fix].application.triangulos:
-            clientR = sesionesFix[id_fix].application.triangulos[0].clientR
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            response = loop.run_until_complete(clientR.get_posiciones(cuenta))
-            loop.close()
+        if id_fix in fixM.main_tasks:
+            response = await fixM.main_tasks[id_fix].application.get_posiciones(cuenta)
             return jsonify(response)
         else:
             abort(make_response(jsonify(message="manual no activo"), 401))
 
-    def manua_get_balance(id):
+    async def manua_get_balance(id):
+        from app import fixM
         id_fix = id
         print("request", request)
         cuenta = request.args.get('cuenta', '')
         print("uenta", cuenta)
-        if 0 in sesionesFix[id_fix].application.triangulos:
-            clientR = sesionesFix[id_fix].application.triangulos[0].clientR
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            response = loop.run_until_complete(clientR.get_balance(account=cuenta))
-            loop.close()
-            return jsonify(response)
+        if id_fix in fixM.main_tasks:
+            balance = await fixM.main_tasks[id_fix].application.get_balance(account=cuenta)
+            return jsonify(balance)
         else:
             abort(make_response(jsonify(message="manual no activo"), 401))
 
@@ -128,11 +108,13 @@ class FixManualController:
         from app import fixM
         id_fix = id
         cuenta = request.args.get('cuenta', '')
-        fixM.main_tasks[id_fix].application.orderMassStatusRequest(
-                "1", 7, cuenta)
-        return jsonify({"status":True})
+        response = {"status": False}
+        if id_fix in fixM.main_tasks:
+            response = await fixM.main_tasks[id_fix].application.orderMassStatusRequest("0", 7, cuenta)
+        return jsonify(response)
 
-    def manual_get_trades():
+    async def manual_get_trades():
+        from app import fixM
         req_obj = request.get_json()
         print(req_obj)
         id_fix = req_obj['id_fix']
@@ -140,12 +122,8 @@ class FixManualController:
         symbol = req_obj['symbol']
         desde = req_obj['desde']
         hasta = req_obj['hasta']
-        if 0 in sesionesFix[id_fix].application.triangulos:
-            clientR = sesionesFix[id_fix].application.triangulos[0].clientR
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            response = loop.run_until_complete(clientR.get_trades_manual(market_id, symbol, desde, hasta))
-            loop.close()
+        if id_fix in fixM.main_tasks:
+            response = await fixM.main_tasks[id_fix].application.get_trades_manual(market_id, symbol, desde, hasta)
             return jsonify(response)
         else:
             abort(make_response(jsonify(message="manual no activo"), 401))

@@ -556,12 +556,14 @@ class Application(fix.Application):
 
        # self.send_to_bot(details, accountIDMsg, 4)#4=order cancel reject 
 
-       #actualizamos variable en espera
-      #  if clientOrderID in self.clOrdIdEsperar:
-        #    self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
-          #  self.clOrdIdEsperar[clientOrderID]["data"] = details
+       
         taskBroadcast = {"type": 5, "data":details}
         self.server_md.broadcast(str(taskBroadcast))
+
+        #actualizamos variable en espera para orden manual
+        if clientOrderID in self.clOrdIdEsperar:
+            self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
+            self.clOrdIdEsperar[clientOrderID]["data"] = details
 
 
     def onMessage_ExecutionReport_New(self, message, session):
@@ -638,10 +640,7 @@ class Application(fix.Application):
                                'text': details['text']
                                }
         
-        #actualizamos variable en espera
-     #   if clientOrderID in self.clOrdIdEsperar:
-        #    self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
-         #   self.clOrdIdEsperar[clientOrderID]["data"] = details
+        
 
         self.orders[orderID] = details
         self.sessions[targetCompID][clientOrderID] = orderID
@@ -652,6 +651,11 @@ class Application(fix.Application):
       #  self.send_to_bot(details, accountIDMsg, 0)#0=order new 
         taskBroadcast = {"type": 3, "data":details}
         self.server_md.broadcast(str(taskBroadcast))
+
+        #actualizamos variable en espera para orden manual
+        if clientOrderID in self.clOrdIdEsperar:
+            self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
+            self.clOrdIdEsperar[clientOrderID]["data"] = details
 
     def onMessage_ExecutionReport_OrderCanceledResponse(self, message, session):
         """
@@ -686,10 +690,15 @@ class Application(fix.Application):
         clientOrderID = self.getValue(message, fix.ClOrdID())
         targetCompID = session.getTargetCompID().getValue()
         senderCompID = session.getSenderCompID().getValue()
+        origClOrdId = ""
+        try:
+            origClOrdId = self.getValue(message, fix.OrigClOrdID())
+        except Exception as e:
+            logfix.info("error obteniendo origClOrdId")
         details = {'targetCompId': targetCompID,
                    'clOrdId': clientOrderID,
                    'execId': self.getValue(message, fix.ExecID()),
-                   'origClOrdId': self.getValue(message, fix.OrigClOrdID()),
+                   'origClOrdId': origClOrdId,
                    'symbol': self.getValue(message, fix.Symbol()),
                    'side': self.getSide(self.getValue(message, fix.Side())),
                    'securityExchange': self.getValue(message, fix.SecurityExchange()),
@@ -737,15 +746,17 @@ class Application(fix.Application):
         logfix.info(
             f"onMessage_ExecutionReport_OrderCanceledResponse: {details}")
         
-        #actualizamos variable en espera
-    #    if clientOrderID in self.clOrdIdEsperar:
-          #  self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
-         #   self.clOrdIdEsperar[clientOrderID]["data"] = details
+        
        
        # self.send_to_bot(details, accountIDMsg, 2)#2=order cancel accepted 
 
         taskBroadcast = {"type": 5, "data":details}
         self.server_md.broadcast(str(taskBroadcast))
+
+        #actualizamos variable en espera para orden manual
+        if clientOrderID in self.clOrdIdEsperar:
+            self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
+            self.clOrdIdEsperar[clientOrderID]["data"] = details
 
     def onMessage_ExecutionReport_OrderReplacedResponse(self, message, session):
         """
@@ -832,13 +843,15 @@ class Application(fix.Application):
         self.sessions[targetCompID][clientOrderID] = orderID
         logfix.info("Order Replaced Response: %s" % details)
        # self.send_to_bot(details, accountIDMsg, 1)#1=order modify accepted 
-        #actualizamos variable en espera
-       # if clientOrderID in self.clOrdIdEsperar:
-       #     self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
-        #    self.clOrdIdEsperar[clientOrderID]["data"] = details
+        
         # Broadcast JSON to WebSocket
         taskBroadcast = {"type": 4, "data":details}
         self.server_md.broadcast(str(taskBroadcast))
+
+        #actualizamos variable en espera para orden manual 
+        if clientOrderID in self.clOrdIdEsperar:
+            self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
+            self.clOrdIdEsperar[clientOrderID]["data"] = details
 
     def onMessage_ExecutionReport_OrderFilledPartiallyFilledResponse(self, message, session):
         """
@@ -1004,6 +1017,7 @@ class Application(fix.Application):
         targetCompID = session.getTargetCompID().getValue()
         senderCompID = session.getSenderCompID().getValue()
         data = {}
+        ReportNumFinal = 0
         try:
 
             totNumReports = self.getValue(message, fix.TotNumReports())
@@ -1025,12 +1039,7 @@ class Application(fix.Application):
                        'marketLimit': False
                        }
 
-            self.massStatusArray.append(details)
-            print("massStatusArray", self.massStatusArray)
-            if details["lastRptRequested"] == True:
-                print("lastRptRequested true", details)
-                self.massStatusArrayReal.append(details)
-
+            
             data = {}
             data['type'] = 'os'
             data['senderCompID'] = senderCompID
@@ -1050,19 +1059,14 @@ class Application(fix.Application):
 
                 details.update(details_with_orders)
                 data['statusReport'].update(details_with_orders)
-                print(
-                    f"contadorOrdenesMassStatus: {len(self.massStatusArray)}, totNumReports: {int(totNumReports)}  ")
-                if len(self.massStatusArray) == int(totNumReports):
-                    print(
-                        "ya llegaron todas las ordenes q tenemos entonces desactuvar ")
-                    self.massStatusTrue = False
-                    print("array false", self.massStatusArray)
-                    print("array real", self.massStatusArrayReal)
-                    self.responseMassStatus = {
-                        "status": True, "data": self.massStatusArray}
-
-                else:
-                    print("no han llegado todas", len(self.massStatusArray))
+                self.massStatusArray.append(details)
+                print("massStatusArray", self.massStatusArray)
+                if details["massStatusReqId"] in self.clOrdIdEsperar:
+                    massID = details["massStatusReqId"]
+                    self.clOrdIdEsperar[massID]["data"].append(details)
+                    if details["lastRptRequested"] == True:
+                        print("lastRptRequested true", details)
+                        self.clOrdIdEsperar[massID]["lastRptRequested"] = True
             else:
                 print("reportes son 0")
                 self.responseMassStatus = {
@@ -1078,6 +1082,8 @@ class Application(fix.Application):
         print(data)
         # Broadcast JSON to WebSocket
      #   self.server_md.broadcast(str(data))
+
+
 
     def onMessage_ExecutionReport_RejectMessageResponse(self, message, session):
         # aqui me llego el error de una orden nueva por precio maximo
@@ -1135,13 +1141,15 @@ class Application(fix.Application):
         logfix.info(
             f"onMessage_ExecutionReport_RejectMessageResponse : {str(details)}")
        # self.send_to_bot(details, accountIDMsg, 5)#5=order reject message
-        #actualizamos variable en espera
-    #    if clientOrderID in self.clOrdIdEsperar:
-     #       self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
-       #     self.clOrdIdEsperar[clientOrderID]["data"] = details
+        
         # Broadcast JSON to WebSocket
         taskBroadcast = {"type": 6, "data":details}
         self.server_md.broadcast(str(taskBroadcast))
+
+        #actualizamos variable en espera para orden manual
+        if clientOrderID in self.clOrdIdEsperar:
+            self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
+            self.clOrdIdEsperar[clientOrderID]["data"] = details
 
     def onMessage_MarketDataSnapshotFullRefresh(self, message, session):
         """
@@ -2186,7 +2194,7 @@ class Application(fix.Application):
                    'OrigClOrdID': OrigClOrdID
                    }
         
-      #  self.clOrdIdEsperar[clOrdId] = {"clOrdId": clOrdId, "type": 2, "details": details, "llegoRespuesta": False}
+     #   self.clOrdIdEsperar[clOrdId] = {"clOrdId": clOrdId, "type": 2, "details": details, "llegoRespuesta": False}
      
 
         # ---- Header
@@ -2359,7 +2367,7 @@ class Application(fix.Application):
         else:
             return "2"
 
-    def orderMassStatusRequest(self, securityStatus, MassStatusReqType=7, account=""):
+    async def orderMassStatusRequest(self, securityStatus, MassStatusReqType=7, account=""):
         """
         Order Mass Status Request
 
@@ -2392,14 +2400,40 @@ class Application(fix.Application):
         header.setField(fix.TargetCompID(self.targetCompID))
 
         # ---- Body
-
-        msg.setField(fix.MassStatusReqID(randomString(5)))
+        MyMassStatusReqID = randomString(5)
+        msg.setField(fix.MassStatusReqID(MyMassStatusReqID))
         msg.setField(585, str(MassStatusReqType))
         msg.setField(1, str(account))
         msg.setField(fix.SecurityStatus(securityStatus))
         msgCompilado = msg.toString().replace(__SOH__, "|")
         logfix.info(f"mensaje antes de enviarlo: {msgCompilado}")
         fix.Session.sendToTarget(msg)
+        self.clOrdIdEsperar[MyMassStatusReqID] = {"massStatusReqId":MyMassStatusReqID, "lastRptRequested": False, "data":[]}
+        task = asyncio.create_task(self.esperarRespuestaMassStatus(MyMassStatusReqID))
+        response = await task 
+        return response
+    
+    async def esperarRespuestaMassStatus(self, MyMassStatusReqID):
+        response = {"status": False, "MyMassStatusReqID": MyMassStatusReqID}
+        try:
+            logfix.info(f"esperarRespuestaMassStatus")
+            contador = 0
+            while True:
+                if self.clOrdIdEsperar[MyMassStatusReqID]["lastRptRequested"]==True:
+                    logfix.info("llego respuesta de mass status")
+                    response = self.clOrdIdEsperar[MyMassStatusReqID]["data"]
+                    break
+                if len(self.massStatusArray) == 0 and contador > 30:
+                    logfix.info("tiempo excedido de mass status ")
+                    response = {
+                        "status": False, "msg": "tiempo excedido, no llego respuesta o algo mas paso"}
+                    break
+                contador+=1
+                await asyncio.sleep(0.1)
+        except Exception as e:
+            logfix.error(f"error en esperarRespuestaMassStatus: {e} ")
+        return response
+
 
     async def orderMassCancelRequest(self, marketSegment):
         """
@@ -2699,3 +2733,333 @@ class Application(fix.Application):
     def manual_logout(self):
         fix.Session.lookupSession(
             self.sessions[self.targetCompID]['session']).logout()
+
+    async def get_balance(self, account=""):
+        try:
+            logfix.info(f"get balance {account} ")
+            balance = self.rest.get_balance(account)
+            logfix.info(f"balance {balance}")
+            return balance["accountData"]
+        except Exception as e:
+            logfix.error(f"error solicitando balance: {e}")
+            return 0
+        
+    async def get_posiciones(self, cuenta):
+        try:
+            logfix.info(f"get_posiciones {cuenta}")
+            posiciones = self.rest.get_positions(cuenta)
+            logfix.info(f"posiciones {posiciones}")
+            return posiciones["positions"]
+        except Exception as e:
+            logfix.error(f"error en get_posiciones: {e}")
+            return []
+        
+    async def get_trades_manual(self, market_id, symbol, desde, hasta):
+        try:
+            logfix.info("get trades manual")
+            trades = self.rest.get_historical_trades(
+                market_id, symbol, desde, hasta)
+            logfix.info(f"trades {trades}")
+            return trades["trades"]
+        except Exception as e:
+            logfix.error(f"error en get_trades_manual: {e}")
+            return []
+        
+    async def cancelar_orden_manual(self, orderID, OrigClOrdID, side, quantity, symbol, cuenta):
+        try:
+            logfix.info(
+                f"cancelar orden to app {orderID, OrigClOrdID, side, quantity, symbol}")
+            clOrdId = self.getNextOrderID(cuenta, 0)
+            response = await self.orderCancelRequestManual(clOrdId, OrigClOrdID, side, quantity, symbol, cuenta)
+        except Exception as e:
+            self.log.error(f"error en cancelar_orden_manual: {e}")
+            response = {"status": 4}
+        return response
+    
+    async def orderCancelRequestManual(self, clOrdId, OrigClOrdID, side, quantity, symbol,  cuenta=""):
+        logfix.info(
+            f"orderCancelRequest: {clOrdId} {OrigClOrdID} {side} {quantity} {symbol} ")
+        """
+        Order Cancel Request
+        
+        Message Type = 'F'.
+        The Order Cancel Request message requests the cancellation of all of the remaining quantity of an 
+        existing order. The request will only be accepted if the order can successfully be pulled back from the
+        exchange book without executing. A cancel request is assigned a ClOrdID and is treated as a separate
+        entity. If rejected, the ClOrdID of the Cancel Request will be sent in the Cancel Reject message, as well
+        as the ClOrdID of the actual order in the OrigClOrdID field. The ClOrdID assigned to the cancel request 
+        must be unique amongst the ClOrdID assigned to regular orders and replacement orders. A successful 
+        Order Cancel Request is replied to with an Execution Report message.       
+        
+        Arguments:
+            - orderId: string
+            - symbol: string
+            - side: char
+            - quantity: int
+        
+        Fields:
+            - Header Group:
+                - (8) BeginString = 'FIXT.1.1
+                - (9) BodyLength = (Int)
+                - (35) MsgType = F  
+                - (1128) AppVerID = 9 (FIX50SP2)
+                - (49) SenderCompID = usuario
+                - (56) TargetCompID = 'ROFX'/'BYMA'
+            - (11) ClOrdID = (string)
+            - (41) OrigClOrdID = (string)
+            - (54) Side = 1 (Buy) / 2 (Sell)
+            - (60) TransactTime = UTC Timestamp
+            - (1)  Account = (string)
+            - (38) OrderQty = (int)
+            - (55) Symbol = (string)            
+            - (10) CheckSum = (string(3))       
+        """
+
+       
+        details = {'clOrdId': clOrdId,
+                   'symbol': symbol,
+                   'side': side,
+                   'quantity': quantity,
+                   'OrigClOrdID': OrigClOrdID
+                   }
+        
+        self.clOrdIdEsperar[clOrdId] = {"clOrdId": clOrdId, "type": 2, "details": details, "llegoRespuesta": False}
+     
+
+        # ---- Header
+
+        msg = fix50.OrderCancelRequest()
+        header = msg.getHeader()
+        header.setField(fix.SenderCompID(self.senderCompID))
+        header.setField(fix.TargetCompID(self.targetCompID))
+
+        # ---- Body
+
+        msg.setField(fix.ClOrdID(str(details['clOrdId'])))
+        msg.setField(41, OrigClOrdID)
+        msg.setField(54, str(details['side']))
+        msg.setField(fix.TransactTime())
+        msg.setField(fix.Account(cuenta))
+        msg.setField(fix.OrderQty(details['quantity']))
+        msg.setField(fix.Symbol(details['symbol']))
+        msg.setField(fix.SecurityExchange(self.targetCompID))
+
+        fix.Session.sendToTarget(msg)
+
+        #ahora vamos a abrir en un nuevo hilo la espera 
+        task = asyncio.create_task(self.esperarRespuesta(clOrdId, "newCancel"))
+        # Esperar a que la tarea asincrónica termine y devuelva su resultado
+        response = await task
+        return response
+
+    async def nueva_orden_manual(self, symbol, side, quantity,  price, orderType, cuenta):
+        logfix.info(
+            f"nueva_orden manual to app {symbol, side, quantity,  price, orderType}")
+        try:
+            clOrdId = self.getNextOrderID(cuenta, 0)
+            response = await self.newOrderSingleManual(clOrdId, symbol, side, quantity,  price, orderType, 0, cuenta)
+        except Exception as e:
+            logfix.error(f"error en nueva_orden_manual: {e}")
+            response = {"status": 4}
+        return response
+
+
+    async def newOrderSingleManual(self, clOrdId, symbol, side, quantity, price=0, orderType=2, idTriangulo=0, cuenta=""):
+        logfix.info(
+            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
+        """
+        New Order - Single
+        
+        Message Type = 'D'.
+        The New Order Single message is used by institutions to electronically submit orders to be executed by the
+        exchange. Orders should have a unique identifier (tag ClOrdID <11>) assigned by the institution for a trading day.
+        Orders with duplicate identifiers will be rejected by the exchange.
+                
+        Arguments:
+            - symbol: string
+            - side: char
+            - quantity: int
+            - price: float
+            - orderType: char
+        
+        Fields:
+            - Header Group:
+                - (8) BeginString = 'FIXT.1.1
+                - (9) BodyLength = (Int)
+                - (35) MsgType = D 
+                - (1128) AppVerID = 9 (FIX50SP2)
+                - (49) SenderCompID = usuario
+                - (56) TargetCompID = 'ROFX'/'BYMA'
+                - (59) TimeInForce = 0 (Day) / 1 (Good Till Cancel) / 3 (Fill or Kill) / 4 (Good Till Date) / 5 (At the Crossing) / 6 (Good Till Crossing) / 7 (Good Through Crossing)
+            - (1)  Account = (string)
+            - (11) ClOrdID = (string)
+            - (38) OrderQty = (int)
+            - (40) OrdType = 1 (Market) / 2 (Limit)            
+            - (44) Price = (float)
+            - (54) Side = 1 (Buy) / 2 (Sell)
+            - (60) TransactTime = UTC Timestamp     
+            - (55) Symbol = (string)            
+            - (10) CheckSum = (string(3))       
+        """
+
+        print("new clOrdId", clOrdId)
+        details = {'clOrdId': clOrdId,
+                   'symbol': symbol,
+                   'side': side,
+                   'quantity': quantity,
+                   'price': price,
+                   'ordType': orderType
+                   }
+        
+        self.clOrdIdEsperar[clOrdId] = {"clOrdId": clOrdId, "type": 0, "details": details, "llegoRespuesta": False, "lastQty": 0}
+        if orderType == 1:
+            print("es una orden market ---------------")
+        if orderType == 2:
+            print("es una orden limit ---------------")
+        # ---- Header
+
+        msg = fix50.NewOrderSingle()
+        header = msg.getHeader()
+        header.setField(fix.SenderCompID(self.senderCompID))
+        header.setField(fix.TargetCompID(self.targetCompID))
+
+        # ---- Body
+
+        msg.setField(fix.Account(cuenta))
+        msg.setField(fix.ClOrdID(str(details['clOrdId'])))
+        msg.setField(fix.OrderQty(details['quantity']))
+        msg.setField(40, str(details['ordType']))
+        if orderType != 1:
+            msg.setField(fix.Price(details['price']))
+        msg.setField(54, str(details['side']))
+        msg.setField(59, str(0))
+        msg.setField(fix.TransactTime())
+        msg.setField(fix.Symbol(details['symbol']))
+        msgE = msg.toString().replace(__SOH__, "|")
+        print("enviando orden ", msgE)
+        fix.Session.sendToTarget(msg)
+        #ahora vamos a abrir en un nuevo hilo la espera 
+        task = asyncio.create_task(self.esperarRespuesta(clOrdId, "newOrder"))
+        # Esperar a que la tarea asincrónica termine y devuelva su resultado
+        response = await task
+        return response
+    
+    async def modificar_orden_manual(self,  orderId, origClOrdId, side, orderType, symbol, quantity, price, sizeViejo, cuenta):
+        try:
+            logfix.info(
+                f"modify orden to app {orderId, origClOrdId, side, orderType, symbol, quantity, price, 0 }")
+        # self.f.responseModify = None
+            response = await self.cancelar_orden_manual(orderId, origClOrdId, side, sizeViejo, symbol,cuenta)
+            if response["llegoRespuesta"] == True and response["data"]["reject"]=='false':
+                response = await self.nueva_orden_manual(symbol, side, quantity, price, orderType,cuenta)
+        except Exception as e:
+            logfix.error(f"error en modificar_orden_manual: {e}")
+            response = {"status": 4}
+        return response
+    
+    async def modificar_orden_manual_2(self,  orderId, origClOrdId, side, orderType, symbol, quantity, price, cuenta):
+        try:
+            logfix.info(
+                f"modify orden to app {orderId, origClOrdId, side, orderType, symbol, quantity, price, 0 }")
+            # self.f.responseModify = None
+            clOrdId = self.getNextOrderID(cuenta, 0)
+            response = await self.orderCancelReplaceRequestManual(
+                clOrdId, orderId, origClOrdId, side, orderType, symbol, quantity, price, cuenta)
+        except Exception as e:
+            logfix.error(f"error en modificar_orden_manual2: {e}")
+            response = {"status": 4}
+        return response
+
+
+    async def orderCancelReplaceRequestManual(self, clOrdId, orderId, origClOrdId, side,  orderType, symbol, quantity=None, price=None, cuenta=""):
+        logfix.info(
+            f"orderCancelReplaceRequest: {clOrdId}, {orderId}, {origClOrdId}, {side}, {orderType}, {symbol}, {quantity}, {price}, {cuenta}")
+        """
+        Order Cancel/Replace Request
+        
+        Message Type = 'G'.
+        
+        The Order Cancel Replace Request message is used to change the parameters of a previously entered
+        order. It may be used to change attributes of an order (i.e. reduce/increase quantity, change price).
+        The Cancel/Replace request will only be accepted if the order can successfully be pulled back from the 
+        exchange book without executing.
+        
+        Only the fields that are being changed need to be sent in the replacement message. Fields that are not
+        sent are considered without changes. (FUNCIONA SOLAMENTE MANDANDO PRECIO Y CANTIDAD)
+        If an order is successfully replaced, then it will generate a new OrderID for it, while the replaced order
+        will be canceled.
+                
+        Arguments:
+            - orderId: string
+            - origClOrdId: string
+            - symbol: string
+            - side: char
+            - orderType: char
+            - quantity: int
+            - price: float
+        
+        Fields:
+            - Header Group:
+                - (8) BeginString = 'FIXT.1.1
+                - (9) BodyLength = (Int)
+                - (35) MsgType = F  
+                - (1128) AppVerID = 9 (FIX50SP2)
+                - (49) SenderCompID = usuario
+                - (56) TargetCompID = 'ROFX'/'BYMA'
+            - (1)  Account = (string)
+            - (11) ClOrdID = (string)
+            - (37) OrderID = (string)
+            - (40) OrdType = 1 (Market) / 2 (Limit)            
+            - (41) OrigClOrdID = (string)
+            - (44) Price = (float) CONDITIONAL
+            - (54) Side = 1 (Buy) / 2 (Sell)
+            - (60) TransactTime = UTC Timestamp
+            - (55) Symbol = (string)          
+            - (38) OrderQty = (int) CONDITIONAL             
+            - (10) CheckSum = (string(3))       
+        """
+
+       # clOrdId = self.getNextOrderID()
+      
+        details = {'clOrdId': clOrdId,
+                   'origClOrdId': origClOrdId,
+                   'symbol': symbol,
+                   'side': side,
+                   'quantity': quantity,
+                   'price': price,
+                   'orderId': orderId,
+                   'ordType': orderType
+                   }
+        self.clOrdIdEsperar[clOrdId] = {"clOrdId": clOrdId, "type": 1, "details": details, "llegoRespuesta": False, "lastQty": 0}
+     
+        # ---- Header
+
+        msg = fix50.OrderCancelReplaceRequest()
+        header = msg.getHeader()
+        header.setField(fix.SenderCompID(self.senderCompID))
+        header.setField(fix.TargetCompID(self.targetCompID))
+
+        # ---- Body
+
+        msg.setField(fix.Account(cuenta))
+        msg.setField(fix.ClOrdID(str(details['clOrdId'])))
+        msg.setField(fix.OrderID(str(details['orderId'])))
+        msg.setField(40, str(details['ordType']))
+        msg.setField(fix.OrigClOrdID(str(details['origClOrdId'])))
+        if details['price'] is not None:
+            msg.setField(fix.Price(float(details['price'])))
+        msg.setField(54, str(details['side']))
+        msg.setField(fix.TransactTime())
+        msg.setField(55, str(details['symbol']))
+        if details['quantity'] is not None:
+            msg.setField(fix.OrderQty(int(details['quantity'])))
+
+        fix.Session.sendToTarget(msg)
+        #ahora vamos a abrir en un nuevo hilo la espera 
+        task = asyncio.create_task(self.esperarRespuesta(clOrdId, "ModifyOrder"))
+        # Esperar a que la tarea asincrónica termine y devuelva su resultado
+        response = await task
+        # Broadcast JSON to WebSocket
+        
+
+        return response
