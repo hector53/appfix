@@ -363,7 +363,8 @@ class FixController:
         fecha_actual_mas_4h_str=fecha_actual_mas_4h.strftime(
         "%Y%m%d")
         ordenesToda=mongo.db.ordenes.find({
-        "transactTime": {"$regex": f"^{fecha_actual_mas_4h_str}"}
+        "transactTime": {"$regex": f"^{fecha_actual_mas_4h_str}"}, 
+         "ordStatus": { "$nin": ["CANCELLED", "REJECTED"] } 
         }, {"_id": 0})
 
         return jsonify(list(ordenesToda))
