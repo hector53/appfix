@@ -1,11 +1,39 @@
-import json
+import pymongo
+from datetime import datetime
+import time
+start = time.time()
+# Conecta a la base de datos de MongoDB
+client = pymongo.MongoClient("mongodb://localhost:27017/")
 
-def py_to_json_bool(py_bool):
-    json_bool = bool(py_bool)
-    json_bool =  str(json_bool).lower()  
-    return json_bool
+# Selecciona la base de datos y la colección
+db = client["rofex"]
+collection = db["ordenes"]
 
-py_bool = False
-json_bool = py_to_json_bool(py_bool)
-print(json.loads(json_bool))
-# "false"
+buscarPendientes = collection.find({
+            "active": True,
+            "$or": [
+            {"ordStatus": "NEW"}, 
+            {"ordStatus": "PARTIALLY FILLED"}
+            ]
+})
+pendientes = list(buscarPendientes)
+print("pendientes", len(pendientes) )
+ordenes_ejecutadas = collection.aggregate([
+    {"$match": {"$or": [
+        {"ordStatus": "FILLED"},
+        {"$and": [
+            {"ordStatus": "PARTIALLY FILLED"},
+            {"active": True}
+        ]}
+    ]}},
+    {"$group": {
+        "_id": "$symbol",
+        "ordenes": {"$push": "$$ROOT"}
+    }}
+])
+
+ejecutadas = list(ordenes_ejecutadas)
+print("ejecutadas: ", ejecutadas)
+print("ejecutadas", len(ejecutadas) )
+print(f'Tiempo transcurrido {time.time() - start }')
+

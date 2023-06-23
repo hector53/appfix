@@ -362,12 +362,43 @@ class FixController:
         # Convertir la fecha a un formato legible
         fecha_actual_mas_4h_str=fecha_actual_mas_4h.strftime(
         "%Y%m%d")
-        ordenesToda=mongo.db.ordenes.find({
-        "transactTime": {"$regex": f"^{fecha_actual_mas_4h_str}"}, 
-         "ordStatus": { "$nin": ["CANCELLED", "REJECTED"] } 
+        """ordenesToda=mongo.db.ordenes.find({
+         "ordStatus": { "$nin": ["CANCELLED", "REJECTED"] }
         }, {"_id": 0})
+        
+        """
+        ordenesEjecutadas=mongo.db.ordenes.aggregate([
+        {"$match": {"$or": [
+        {"ordStatus": "FILLED"},
+        {"$and": [
+        {"ordStatus": "PARTIALLY FILLED"},
+        {"active": True}
+        ]}
+        ]}},
+        {"$sort": {"transactTime": -1}},
+        {"$group": {
+        "_id": "$symbol",
+        "ordenes": {"$push": {
+            "side": "$side",
+            "transactTime": "$transactTime", 
+            "ordType": "$ordType", 
+            "price":"$price", 
+            "lastQty": "$lastQty",
+            "id_bot": "$id_bot"
+        }},
+        "count": {"$sum": 1}
+        }},
+        {"$project": {
+        "symbol": "$_id",
+        "ordenes": {"$slice": ["$ordenes", 10]},
+        "_id": 0
+        }},
+        ])
+        ejecutadas = list(ordenesEjecutadas)
 
-        return jsonify(list(ordenesToda))
+        
+       # log.info(list(ordenesToda))
+        return jsonify(list(ejecutadas))
     
     def get_securitys():
         from app import fixM

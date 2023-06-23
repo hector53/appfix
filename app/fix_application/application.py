@@ -130,8 +130,7 @@ class Application(fix.Application):
         self.sessions[targetCompID]['exchID'] = 0
         self.sessions[targetCompID]['execID'] = 0
 
-        logfix.info("onCreate, sessionID >> (%s)" %
-                    self.sessions[targetCompID]['session'])
+        #logfix.info("onCreate, sessionID >> (%s)" %                    self.sessions[targetCompID]['session'])
 
     def onLogon(self, session):
         """
@@ -142,7 +141,7 @@ class Application(fix.Application):
         targetCompID = session.getTargetCompID().getValue()
         self.sessions[targetCompID]['connected'] = True
 
-        logfix.info("Client (%s) has logged in >>" % targetCompID)
+        #logfix.info("Client (%s) has logged in >>" % targetCompID)
 
         # Test Message
         self.testRequest('TEST', session)
@@ -159,7 +158,7 @@ class Application(fix.Application):
       #  storePath = session.lookupSession(sessionID).getStore().getStorePath()
         # Eliminar los archivos de la sesión
       #  logfixout()
-        logfix.info("Client (%s) has logged out >>" % targetCompID)
+        #logfix.info("Client (%s) has logged out >>" % targetCompID)
 
     def toAdmin(self, message, session):
         """
@@ -171,18 +170,17 @@ class Application(fix.Application):
 
         msg = message.toString().replace(__SOH__, "|")
         # self.insert_log(msg)
-        logfix.info("S toAdmin>> (%s)" % msg)
+        #logfix.info("S toAdmin>> (%s)" % msg)
 
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_Logon:
             message.getHeader().setField(553, self.senderCompID)
             message.getHeader().setField(554, self.password)
             msg = message.toString().replace(__SOH__, "|")
-            logfix.info(
-                f"S Logon---Login exitoso en la cuenta {self.senderCompID}, msg: {msg}")
+            #logfix.info(                f"S Logon---Login exitoso en la cuenta {self.senderCompID}, msg: {msg}")
 
     def fromAdmin(self, message, session):
         msg = message.toString().replace(__SOH__, "|")
-        logfix.info("R fromAdmin>> (%s)" % msg)
+        #logfix.info("R fromAdmin>> (%s)" % msg)
         # self.insert_log(msg)
         """
         fromAdmin notifies you when an administrative message is sent from a counterparty to your FIX engine. This can be usefull for doing extra validation on logon messages like validating passwords.
@@ -205,7 +203,7 @@ class Application(fix.Application):
 
     def toApp(self, message, session):
         msg = message.toString().replace(__SOH__, "|")
-        logfix.info("S toApp>> (%s)" % msg)
+        #logfix.info("S toApp>> (%s)" % msg)
         # self.insert_log(msg)
         """
         toApp is a callback for application messages that are being sent to a counterparty.
@@ -218,10 +216,9 @@ class Application(fix.Application):
         """
         # Message Type = 'j' - Business Message Reject
         headeRValue = self.getHeaderValue(message, fix.MsgType())
-        logfix.info(f"headeRValue {headeRValue}")
+        #logfix.info(f"headeRValue {headeRValue}")
         if headeRValue == fix.MsgType_BusinessMessageReject:
-            logfix.info(
-                f"el mensaje contiene esto: { fix.MsgType_BusinessMessageReject} ")
+            #logfix.info(                f"el mensaje contiene esto: { fix.MsgType_BusinessMessageReject} ")
             self.onMessage_BusinessMessageReject(message, session)
         else:
             print("el mensaje no se si se envio ")
@@ -233,17 +230,17 @@ class Application(fix.Application):
 
     def fromApp(self, message, session):
         msg = message.toString().replace(__SOH__, "|")
-        logfix.info("R fromApp>> (%s)" % msg)
+        #logfix.info("R fromApp>> (%s)" % msg)
         
    
       #  task = {"message": message, "session": session}
-      #  logfix.info(f"message_queue desde application: {self.message_queue.message_queue} ")
+      #  #logfix.info(f"message_queue desde application: {self.message_queue.message_queue} ")
       #  self.message_queue.message_queue.put_nowait(task)
-       # logfix.info(f"message_queue desde application despues de agregar tarea: {self.message_queue.message_queue} ")
+       # #logfix.info(f"message_queue desde application despues de agregar tarea: {self.message_queue.message_queue} ")
      #   return
         # self.insert_log(msg)
        # msg = message.toString().replace(__SOH__, "|")
-       # logfix.info("S toApp>> (%s)" % msg)
+       # #logfix.info("S toApp>> (%s)" % msg)
         """
         fromApp receives application level request.
         If your application is a sell-side OMS, this is where you will get your new order requests.
@@ -262,7 +259,7 @@ class Application(fix.Application):
 
         # Message Type = 'B' - News
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_News:
-            logfix.info("Message Type = 'B' - News")
+            #logfix.info("Message Type = 'B' - News")
             self.onMessage_News(message, session)
 
         """
@@ -271,11 +268,11 @@ class Application(fix.Application):
 
         # Message Type = 'h' - Trading Session Status
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_TradingSessionStatus:
-            logfix.info("Message Type = 'h' - Trading Session Status")
+            #logfix.info("Message Type = 'h' - Trading Session Status")
             self.onMessage_TradingSessionStatus(message, session)
         # Message Type = '9' - Order Cancel Reject
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_OrderCancelReject:
-            logfix.info("Message Type = '9' - Order Cancel Reject")
+            #logfix.info("Message Type = '9' - Order Cancel Reject")
             
             self.onMessage_OrderCancelReject(message, session)
             self.onMessage(message, session)
@@ -285,8 +282,8 @@ class Application(fix.Application):
         # Message Type = '8' - ExecutionReport: New
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_ExecutionReport and self.getValue(message, fix.ExecType()) == fix.ExecType_NEW:
             self.orderID = self.getValue(message, fix.OrderID())
-            logfix.info(" Message Type = '8' - ExecutionReport: New")
-            logfix.info(self.orderID)
+            #logfix.info(" Message Type = '8' - ExecutionReport: New")
+            #logfix.info(self.orderID)
             self.onMessage_ExecutionReport_New(message, session)
            # self.msgManager.add_task(1, message, session)
            # task1 = threading.Thread(target=self.onMessage_ExecutionReport_New, args=(1, message, session,))
@@ -302,13 +299,13 @@ class Application(fix.Application):
 #            self.onMessage(message, session)
         # Message Type = '8' - ExecutionReport: Order Canceled
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_ExecutionReport and self.getValue(message, fix.ExecType()) == fix.ExecType_CANCELED:
-            logfix.info("Message Type = '8' - ExecutionReport: Order Canceled")
+            #logfix.info("Message Type = '8' - ExecutionReport: Order Canceled")
             self.onMessage_ExecutionReport_OrderCanceledResponse(
                 message, session)
 #            self.onMessage(message, session)
         # Message Type = '8' - ExecutionReport: Order Replaced
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_ExecutionReport and self.getValue(message, fix.ExecType()) == fix.ExecType_REPLACE:
-            logfix.info("Message Type = '8' - ExecutionReport: Order Replaced")
+            #logfix.info("Message Type = '8' - ExecutionReport: Order Replaced")
             self.orderID = self.getValue(message, fix.OrderID())
 
             self.onMessage_ExecutionReport_OrderReplacedResponse(
@@ -316,20 +313,19 @@ class Application(fix.Application):
 #            self.onMessage(message, session)
         # Message Type = '8' - ExecutionReport: Order Filled/Partially Filled
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_ExecutionReport and self.getValue(message, fix.ExecType()) == fix.ExecType_TRADE:
-            logfix.info(
-                "Message Type = '8' - ExecutionReport: Order Filled/Partially Filled")
+            #logfix.info(                "Message Type = '8' - ExecutionReport: Order Filled/Partially Filled")
             self.onMessage_ExecutionReport_OrderFilledPartiallyFilledResponse(
                 message, session)
 #            self.onMessage(message, session)
         # Message Type = '8' - ExecutionReport: Order Status
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_ExecutionReport and self.getValue(message, fix.ExecType()) == fix.ExecType_ORDER_STATUS:
-            logfix.info("Message Type = '8' - ExecutionReport: Order Status ")
+            #logfix.info("Message Type = '8' - ExecutionReport: Order Status ")
             self.onMessage_ExecutionReport_OrderStatusResponse(
                 message, session)
 #            self.onMessage(message, session)
         # Message Type = '8' - ExecutionRepor: Reject Message
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_ExecutionReport and self.getValue(message, fix.ExecType()) == fix.ExecType_REJECTED:
-            logfix.info("Message Type = '8' - ExecutionRepor: Reject Message")
+            #logfix.info("Message Type = '8' - ExecutionRepor: Reject Message")
             self.onMessage_ExecutionReport_RejectMessageResponse(
                 message, session)
 #            self.onMessage(message, session)
@@ -338,28 +334,27 @@ class Application(fix.Application):
 
         # Message Type = 'W' - Market Data Snapshot / Full Refresh
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_MarketDataSnapshotFullRefresh:
-            logfix.info(
-                "Message Type = 'W' - Market Data Snapshot / Full Refresh")
+            #logfix.info(                "Message Type = 'W' - Market Data Snapshot / Full Refresh")
             self.onMessage_MarketDataSnapshotFullRefresh(message, session)
         # Message Type = 'Y' - Market Data Request Reject
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_MarketDataRequestReject:
-            logfix.info("Message Type = 'Y' - Market Data Request Reject")
+            #logfix.info("Message Type = 'Y' - Market Data Request Reject")
             self.onMessage_MarketDataRequestReject(message, session)
 
         ######## SECURITY DEFINTION ########
         # Message Type = 'y' - Security List
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_SecurityList:
-            logfix.info("Message Type = 'y' - Security List")
+            #logfix.info("Message Type = 'y' - Security List")
             self.onMessage_SecurityList(message, session)
         # Message Type = 'f' - Security Status
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_SecurityStatus:
-            logfix.info("Message Type = 'f' - Security Status")
+            #logfix.info("Message Type = 'f' - Security Status")
             self.onMessage_SecurityStatus(message, session)
 
         ######## POST TRADE ########
         # Message Type = 'AE' - Trade Capture Report
         if self.getHeaderValue(message, fix.MsgType()) == fix.MsgType_TradeCaptureReport:
-            logfix.info("Message Type = 'AE' - Trade Capture Report")
+            #logfix.info("Message Type = 'AE' - Trade Capture Report")
             self.onMessage_TradeCaptureReport(message, session)
 
     """
@@ -381,7 +376,7 @@ class Application(fix.Application):
         Print of FIX Message
         """
         msg = message.toString().replace(__SOH__, "|")
-        logfix.info("onMessage, R app>> (%s)" % msg)
+        #logfix.info("onMessage, R app>> (%s)" % msg)
 
     def onMesssage_Heartbeat(self, message, session):
         """
@@ -389,7 +384,7 @@ class Application(fix.Application):
         """
         try:
             text = self.getValue(message, fix.TestReqID())
-            logfix.info(f'TEST REQUEST: {text}')
+            #logfix.info(f'TEST REQUEST: {text}')
         except:
             logfix.info('HEARTBEAT')
 
@@ -417,7 +412,7 @@ class Application(fix.Application):
                    'sessionRejectReason': self.getSessionRejectReason(self.getValue(message, fix.SessionRejectReason())),
                    'text': self.getValue(message, fix.Text())
                    }
-        logfix.info(f"onMessage - Reject - Session Level: {details}")
+        #logfix.info(f"onMessage - Reject - Session Level: {details}")
 
     def onMessage_Logout(self, message, session):
         """
@@ -453,7 +448,7 @@ class Application(fix.Application):
                    }
         task = {"type": 0, "details": details}
         self.message_queue.put_nowait(task)
-        logfix.info(f"onMessage - News: {details}")
+        #logfix.info(f"onMessage - News: {details}")
         print(details)
 
 
@@ -476,7 +471,7 @@ class Application(fix.Application):
                    'businessRejectReason': self.getBusinessRejectReason(self.getValue(message, fix.BusinessRejectReason())),
                    'text': self.getValue(message, fix.Text())
                    }
-        logfix.info(f"onMessage - Business Message Reject: {details}")
+        #logfix.info(f"onMessage - Business Message Reject: {details}")
 
     def onMessage_TradingSessionStatus(self, message, session):
         """
@@ -552,7 +547,7 @@ class Application(fix.Application):
                    'reject': 'true'
                    }
 
-        logfix.info(f"onMessage - Order Cancel Reject: {details}")
+        #logfix.info(f"onMessage - Order Cancel Reject: {details}")
 
        # self.send_to_bot(details, accountIDMsg, 4)#4=order cancel reject 
 
@@ -568,7 +563,7 @@ class Application(fix.Application):
 
     def onMessage_ExecutionReport_New(self, message, session):
         msg = message.toString().replace(__SOH__, "|")
-        logfix.info("R new order>> (%s)" % msg)
+        #logfix.info("R new order>> (%s)" % msg)
         
         """
         onMessage - Execution Report - New
@@ -646,7 +641,7 @@ class Application(fix.Application):
         self.sessions[targetCompID][clientOrderID] = orderID
 
         # verificar si es una orden nueva en espera y de ser asi, enviar la respuesta
-     #   logfix.info(f"enviar al bot new order")
+     #   #logfix.info(f"enviar al bot new order")
             
       #  self.send_to_bot(details, accountIDMsg, 0)#0=order new 
         taskBroadcast = {"type": 3, "data":details}
@@ -694,7 +689,7 @@ class Application(fix.Application):
         try:
             origClOrdId = self.getValue(message, fix.OrigClOrdID())
         except Exception as e:
-            logfix.info("error obteniendo origClOrdId")
+            logfix.error("error obteniendo origClOrdId")
         details = {'targetCompId': targetCompID,
                    'clOrdId': clientOrderID,
                    'execId': self.getValue(message, fix.ExecID()),
@@ -743,8 +738,7 @@ class Application(fix.Application):
 
         self.orders[orderID] = details
         self.sessions[targetCompID][clientOrderID] = orderID
-        logfix.info(
-            f"onMessage_ExecutionReport_OrderCanceledResponse: {details}")
+        #logfix.info(            f"onMessage_ExecutionReport_OrderCanceledResponse: {details}")
         
         
        
@@ -841,7 +835,7 @@ class Application(fix.Application):
         self.orders[orderID] = details
 
         self.sessions[targetCompID][clientOrderID] = orderID
-        logfix.info("Order Replaced Response: %s" % details)
+        #logfix.info("Order Replaced Response: %s" % details)
        # self.send_to_bot(details, accountIDMsg, 1)#1=order modify accepted 
         
         # Broadcast JSON to WebSocket
@@ -910,7 +904,7 @@ class Application(fix.Application):
                    'typeFilled': 1, 
                    'reject': 'false'
                    }
-        logfix.info("Order Filled/Partially Filled Response: %s" % details)
+        #logfix.info("Order Filled/Partially Filled Response: %s" % details)
        # self.send_to_bot(details, accountFixMsg, 3)#type3=order filled o part
 
         #actualizamos variable en espera
@@ -966,21 +960,20 @@ class Application(fix.Application):
         return obj
 
     def send_to_bot(self, details, accountFixMsg, type): 
-        logfix.info(f"entrando a send to bot account: {accountFixMsg}, details:  {details}")
+        #logfix.info(f"entrando a send to bot account: {accountFixMsg}, details:  {details}")
         clientOrderID = details["clOrdId"]
         try:
             if clientOrderID in self.OrdersIds:
                 typeOrder = self.OrdersIds[clientOrderID]["typeOrder"]  # N B C
                 id_bot = self.OrdersIds[clientOrderID]["id_bot"]
                 lastOrderID = self.OrdersIds[clientOrderID]["lastOrderID"]
-                logfix.info(
-                    f"si es una orden  del bot:{id_bot} con la cuenta: {accountFixMsg} pasando a la cola ...  ")
+                #logfix.info(                    f"si es una orden  del bot:{id_bot} con la cuenta: {accountFixMsg} pasando a la cola ...  ")
                 task = {"type": 1,  "id_bot": id_bot, "typeOrder": typeOrder,
                          "cuenta": accountFixMsg, "details": details, "lastOrderID": lastOrderID }
                 self.message_queue.put_nowait(task)
              
         except Exception as e:
-            logfix.info(f"error pasando orden  en: {e}")
+            logfix.error(f"error pasando orden  en: {e}")
 
 
     def onMessage_ExecutionReport_OrderStatusResponse(self, message, session):
@@ -1138,8 +1131,7 @@ class Application(fix.Application):
         data['senderCompID'] = senderCompID
         data['orderReport'] = details
         # self.insert_log(f"msj de error : {str(details)}")
-        logfix.info(
-            f"onMessage_ExecutionReport_RejectMessageResponse : {str(details)}")
+        #logfix.info(            f"onMessage_ExecutionReport_RejectMessageResponse : {str(details)}")
        # self.send_to_bot(details, accountIDMsg, 5)#5=order reject message
         
         # Broadcast JSON to WebSocket
@@ -1176,7 +1168,7 @@ class Application(fix.Application):
         """
 
         msg = message.toString().replace(__SOH__, "|")
-        logfix.info("onMessage_MarketDataSnapshotFullRefresh, R app (%s)" % msg)
+        #logfix.info("onMessage_MarketDataSnapshotFullRefresh, R app (%s)" % msg)
 
         data = {}
         data['type'] = 'book'
@@ -1247,7 +1239,7 @@ class Application(fix.Application):
         symbolTicker = data["instrumentId"]["symbol"]
 
         # self._tickers[symbolTicker] = data["marketData"]
-        logfix.info("verificar triangulos, para ver a donde pertenece este ticker %s" % symbolTicker)
+        #logfix.info("verificar triangulos, para ver a donde pertenece este ticker %s" % symbolTicker)
        # print("self.marketRequest", self.marketRequest)
         MDReqID = self.getValue(message, fix.MDReqID())
 
@@ -1257,20 +1249,18 @@ class Application(fix.Application):
             if len(self.marketRequest[MDReqID]['simbolos']) == 0:
                 suscripcionCompletada = True
             # verificar si el simbolo pertenece al grupo
-            logfix.info(
-                f"symbols marketRequest: {self.marketRequest[MDReqID]['simbolos']}")
+            #logfix.info(                f"symbols marketRequest: {self.marketRequest[MDReqID]['simbolos']}")
             for i in range(len(self.marketRequest[MDReqID]['simbolos'])):
                 if self.marketRequest[MDReqID]['simbolos'][i] == symbol:
                     self.marketRequest[MDReqID]['simbolos'].pop(i)
                     if len(self.marketRequest[MDReqID]['simbolos']) == 0:
                         suscripcionCompletada = True
                     break
-            logfix.info(
-                f"symbols marketRequest: {self.marketRequest[MDReqID]['simbolos']}")
+            #logfix.info(                f"symbols marketRequest: {self.marketRequest[MDReqID]['simbolos']}")
             if suscripcionCompletada:
                 # borrar el request
                 del self.marketRequest[MDReqID]
-            logfix.info(f"self.marketRequest: {self.marketRequest}")
+            #logfix.info(f"self.marketRequest: {self.marketRequest}")
         task = {"type": 0, "symbolTicker": symbolTicker, "marketData": data["marketData"]}
         self.server_md.broadcast(str(task))
 
@@ -1546,8 +1536,7 @@ class Application(fix.Application):
         if details['marketSegmentId'] in marketSegmentId:
             self.securitySegments[details['marketSegmentId']
                                   ] = "Security List cargada"
-        logfix.info(
-            f"---------market segment id:--------- { details['marketSegmentId']}")
+        #logfix.info(            f"---------market segment id:--------- { details['marketSegmentId']}")
         print("imprimiendo tabla")
       #  print("mostrando data: ", data)
         # print("mostrando data ",table.draw())
@@ -2018,26 +2007,21 @@ class Application(fix.Application):
     async def esperarRespuesta(self, clOrdId, typeOrder):
         response = {"llegoRespuesta": False}
         try:
-            logfix.info(f"esperando respuesta de {typeOrder}, con el clOrdId: {clOrdId}")
+            #logfix.info(f"esperando respuesta de {typeOrder}, con el clOrdId: {clOrdId}")
             contador = 0
             contadorParcial = 0
             while True:
                 
                 if self.clOrdIdEsperar[clOrdId]["llegoRespuesta"] == True:
                     if contadorParcial>2:
-                        if self.clOrdIdEsperar[clOrdId]["type"] == 0:
-                            logfix.info("llego respuesta de new order")
-                        if self.clOrdIdEsperar[clOrdId]["type"] == 1:
-                            logfix.info("llego respuesta de modify order")
-                        if self.clOrdIdEsperar[clOrdId]["type"] == 2:
-                            logfix.info("llego respuesta de cancelar order")
+                        
                         response = self.clOrdIdEsperar[clOrdId]
                         del self.clOrdIdEsperar[clOrdId]
                         break
                     contadorParcial+=1
                 contador+=1
                 if contador > 20:
-                    logfix.info(f"tiempo excedido esperando respuesta para: {typeOrder}, con el clOrdId: {clOrdId} ")
+                    #logfix.info(f"tiempo excedido esperando respuesta para: {typeOrder}, con el clOrdId: {clOrdId} ")
                     response = {
                         "llegoRespuesta": False, "msg": "tiempo excedido, no llego respuesta o algo mas paso"}
                     break
@@ -2049,12 +2033,11 @@ class Application(fix.Application):
     async def esperar_respuesta_mercado(self, codigo):
         response = {"status": False}
         try:
-            logfix.info(f"Esperando respuesta mercado {codigo}")
+            #logfix.info(f"Esperando respuesta mercado {codigo}")
             contador = 0
             while True:
                 if codigo not in self.marketRequest:  # si no esta en la lista de marketRequest, es que llego la respuesta
-                    logfix.info(
-                        f"la suscripcion se completo con exito {codigo}")
+                    #logfix.info(                        f"la suscripcion se completo con exito {codigo}")
                     response = {"status": True}
                     break
                 if contador > 20:  # si paso mas de 30 segundos, no llego la respuesta
@@ -2068,8 +2051,7 @@ class Application(fix.Application):
 
 
     def newOrderSingle(self, clOrdId, symbol, side, quantity, price=0, orderType=2, idTriangulo=0, cuenta=""):
-        logfix.info(
-            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
+        #logfix.info(            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
         """
         New Order - Single
         
@@ -2148,8 +2130,7 @@ class Application(fix.Application):
         #return response
 
     def orderCancelRequest(self, clOrdId, OrigClOrdID, side, quantity, symbol,  cuenta=""):
-        logfix.info(
-            f"orderCancelRequest: {clOrdId} {OrigClOrdID} {side} {quantity} {symbol} ")
+        #logfix.info(            f"orderCancelRequest: {clOrdId} {OrigClOrdID} {side} {quantity} {symbol} ")
         """
         Order Cancel Request
         
@@ -2224,8 +2205,7 @@ class Application(fix.Application):
        # return response
 
     def orderCancelReplaceRequest(self, clOrdId, orderId, origClOrdId, side,  orderType, symbol, quantity=None, price=None, cuenta=""):
-        logfix.info(
-            f"orderCancelReplaceRequest: {clOrdId}, {orderId}, {origClOrdId}, {side}, {orderType}, {symbol}, {quantity}, {price}, {cuenta}")
+        #logfix.info(            f"orderCancelReplaceRequest: {clOrdId}, {orderId}, {origClOrdId}, {side}, {orderType}, {symbol}, {quantity}, {price}, {cuenta}")
         """
         Order Cancel/Replace Request
         
@@ -2406,7 +2386,7 @@ class Application(fix.Application):
         msg.setField(1, str(account))
         msg.setField(fix.SecurityStatus(securityStatus))
         msgCompilado = msg.toString().replace(__SOH__, "|")
-        logfix.info(f"mensaje antes de enviarlo: {msgCompilado}")
+        #logfix.info(f"mensaje antes de enviarlo: {msgCompilado}")
         fix.Session.sendToTarget(msg)
         self.clOrdIdEsperar[MyMassStatusReqID] = {"massStatusReqId":MyMassStatusReqID, "lastRptRequested": False, "data":[]}
         task = asyncio.create_task(self.esperarRespuestaMassStatus(MyMassStatusReqID))
@@ -2416,15 +2396,15 @@ class Application(fix.Application):
     async def esperarRespuestaMassStatus(self, MyMassStatusReqID):
         response = {"status": False, "MyMassStatusReqID": MyMassStatusReqID}
         try:
-            logfix.info(f"esperarRespuestaMassStatus")
+            #logfix.info(f"esperarRespuestaMassStatus")
             contador = 0
             while True:
                 if self.clOrdIdEsperar[MyMassStatusReqID]["lastRptRequested"]==True:
-                    logfix.info("llego respuesta de mass status")
+                    #logfix.info("llego respuesta de mass status")
                     response = self.clOrdIdEsperar[MyMassStatusReqID]["data"]
                     break
                 if len(self.massStatusArray) == 0 and contador > 30:
-                    logfix.info("tiempo excedido de mass status ")
+                    #logfix.info("tiempo excedido de mass status ")
                     response = {
                         "status": False, "msg": "tiempo excedido, no llego respuesta o algo mas paso"}
                     break
@@ -2736,9 +2716,9 @@ class Application(fix.Application):
 
     async def get_balance(self, account=""):
         try:
-            logfix.info(f"get balance {account} ")
+            #logfix.info(f"get balance {account} ")
             balance = self.rest.get_balance(account)
-            logfix.info(f"balance {balance}")
+            #logfix.info(f"balance {balance}")
             return balance["accountData"]
         except Exception as e:
             logfix.error(f"error solicitando balance: {e}")
@@ -2746,9 +2726,9 @@ class Application(fix.Application):
         
     async def get_posiciones(self, cuenta):
         try:
-            logfix.info(f"get_posiciones {cuenta}")
+            #logfix.info(f"get_posiciones {cuenta}")
             posiciones = self.rest.get_positions(cuenta)
-            logfix.info(f"posiciones {posiciones}")
+            #logfix.info(f"posiciones {posiciones}")
             return posiciones["positions"]
         except Exception as e:
             logfix.error(f"error en get_posiciones: {e}")
@@ -2756,10 +2736,10 @@ class Application(fix.Application):
         
     async def get_trades_manual(self, market_id, symbol, desde, hasta):
         try:
-            logfix.info("get trades manual")
+            #logfix.info("get trades manual")
             trades = self.rest.get_historical_trades(
                 market_id, symbol, desde, hasta)
-            logfix.info(f"trades {trades}")
+            #logfix.info(f"trades {trades}")
             return trades["trades"]
         except Exception as e:
             logfix.error(f"error en get_trades_manual: {e}")
@@ -2767,8 +2747,7 @@ class Application(fix.Application):
         
     async def cancelar_orden_manual(self, orderID, OrigClOrdID, side, quantity, symbol, cuenta):
         try:
-            logfix.info(
-                f"cancelar orden to app {orderID, OrigClOrdID, side, quantity, symbol}")
+            #logfix.info(                f"cancelar orden to app {orderID, OrigClOrdID, side, quantity, symbol}")
             clOrdId = self.getNextOrderID(cuenta, 0)
             response = await self.orderCancelRequestManual(clOrdId, OrigClOrdID, side, quantity, symbol, cuenta)
         except Exception as e:
@@ -2777,8 +2756,7 @@ class Application(fix.Application):
         return response
     
     async def orderCancelRequestManual(self, clOrdId, OrigClOrdID, side, quantity, symbol,  cuenta=""):
-        logfix.info(
-            f"orderCancelRequest: {clOrdId} {OrigClOrdID} {side} {quantity} {symbol} ")
+        #logfix.info(            f"orderCancelRequest: {clOrdId} {OrigClOrdID} {side} {quantity} {symbol} ")
         """
         Order Cancel Request
         
@@ -2853,8 +2831,7 @@ class Application(fix.Application):
         return response
 
     async def nueva_orden_manual(self, symbol, side, quantity,  price, orderType, cuenta):
-        logfix.info(
-            f"nueva_orden manual to app {symbol, side, quantity,  price, orderType}")
+        #logfix.info(            f"nueva_orden manual to app {symbol, side, quantity,  price, orderType}")
         try:
             clOrdId = self.getNextOrderID(cuenta, 0)
             response = await self.newOrderSingleManual(clOrdId, symbol, side, quantity,  price, orderType, 0, cuenta)
@@ -2865,8 +2842,7 @@ class Application(fix.Application):
 
 
     async def newOrderSingleManual(self, clOrdId, symbol, side, quantity, price=0, orderType=2, idTriangulo=0, cuenta=""):
-        logfix.info(
-            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
+        #logfix.info(            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
         """
         New Order - Single
         
@@ -2946,8 +2922,7 @@ class Application(fix.Application):
     
     async def modificar_orden_manual(self,  orderId, origClOrdId, side, orderType, symbol, quantity, price, sizeViejo, cuenta):
         try:
-            logfix.info(
-                f"modify orden to app {orderId, origClOrdId, side, orderType, symbol, quantity, price, 0 }")
+            #logfix.info(                f"modify orden to app {orderId, origClOrdId, side, orderType, symbol, quantity, price, 0 }")
         # self.f.responseModify = None
             response = await self.cancelar_orden_manual(orderId, origClOrdId, side, sizeViejo, symbol,cuenta)
             if response["llegoRespuesta"] == True and response["data"]["reject"]=='false':
@@ -2959,8 +2934,7 @@ class Application(fix.Application):
     
     async def modificar_orden_manual_2(self,  orderId, origClOrdId, side, orderType, symbol, quantity, price, cuenta):
         try:
-            logfix.info(
-                f"modify orden to app {orderId, origClOrdId, side, orderType, symbol, quantity, price, 0 }")
+            #logfix.info(                f"modify orden to app {orderId, origClOrdId, side, orderType, symbol, quantity, price, 0 }")
             # self.f.responseModify = None
             clOrdId = self.getNextOrderID(cuenta, 0)
             response = await self.orderCancelReplaceRequestManual(
@@ -2972,8 +2946,7 @@ class Application(fix.Application):
 
 
     async def orderCancelReplaceRequestManual(self, clOrdId, orderId, origClOrdId, side,  orderType, symbol, quantity=None, price=None, cuenta=""):
-        logfix.info(
-            f"orderCancelReplaceRequest: {clOrdId}, {orderId}, {origClOrdId}, {side}, {orderType}, {symbol}, {quantity}, {price}, {cuenta}")
+        #logfix.info(            f"orderCancelReplaceRequest: {clOrdId}, {orderId}, {origClOrdId}, {side}, {orderType}, {symbol}, {quantity}, {price}, {cuenta}")
         """
         Order Cancel/Replace Request
         
