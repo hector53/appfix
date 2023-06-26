@@ -20,7 +20,7 @@ app.add_url_rule('/api/new_order', view_func=FixController.new_order, methods=['
 app.add_url_rule('/api/cancel_order', view_func=FixController.cancel_order, methods=['POST'] )
 app.add_url_rule('/api/modify_order', view_func=FixController.modify_order, methods=['POST'] )
 app.add_url_rule('/api/unsuscribir_mercado', view_func=FixController.unsuscribir_mercado, methods=['POST'] )
-
+app.add_url_rule('/api/get_historico_visor', view_func=FixController.historico_visor, methods=['POST'] )
 
 
 

@@ -132,6 +132,17 @@ class FixController:
             status = await fixM.main_tasks[user_fix].application.marketDataRequest(entries=[0, 1], symbols=symbols, subscription=2,
                     depth=5, updateType=0)
         return jsonify(status)
+    
+    async def historico_visor():
+        from app.clases.cla_historicotv import HistoricoTV
+        req_obj = request.get_json()
+        symbol = req_obj["symbol"]
+        limit = req_obj["limit"]
+        pairs = []
+        pairs.append(symbol)
+        his = HistoricoTV()
+        result = await asyncio.create_task(his.get_data_for_symbol(pairs, limit))
+        return jsonify(result)
 
     async def suscribir_mercado():
         from app import fixM

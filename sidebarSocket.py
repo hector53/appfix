@@ -59,10 +59,8 @@ class socketServer(Thread):
         ordenesEjecutadas=collection.aggregate([
         {"$match": {"$or": [
         {"ordStatus": "FILLED"},
-        {"$and": [
         {"ordStatus": "PARTIALLY FILLED"},
-        {"active": True}
-        ]}
+        
         ], "transactTime": {"$regex": f"^{fechaBuscar}"}}},
         {"$sort": {"transactTime": -1}},
         {"$group": {
