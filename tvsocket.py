@@ -5,7 +5,8 @@ import string
 import ssl
 import time
 import threading
-
+import gzip
+import base64
 import requests
 from websocket import create_connection
 from websocket._exceptions import WebSocketConnectionClosedException
@@ -36,17 +37,17 @@ interval = ['1', '5', '15', '30', '60', '120', '240', 1D, '1W', '1M']
 '''
 
 def search(exchange, symbol):
-    print(f"Searching for: {symbol} on exchange: {exchange}")  # Print the search query
+    #print(f"Searching for: {symbol} on exchange: {exchange}")  # #print the search query
     res = requests.get(
         f"https://symbol-search.tradingview.com/symbol_search/?text={symbol}&exchange={exchange}"
     )
     if res.status_code == 200:
         res = res.json()
-        print(f"Response: {res}")  # Print the response
+        #print(f"Response: {res}")  # #print the response
         assert len(res) != 0, "Nothing Found."
         return res[0]
     else:
-        print("Network Error!")
+        #print("Network Error!")
         exit(1)
 
 def get_auth_token():
@@ -87,11 +88,7 @@ def createMessage(func, paramList):
 
 
 def sendMessage(ws, func, args):
-    #start_time = time.time()  # Registra el tiempo antes de enviar el mensaje
     ws.send(createMessage(func, args))
-    #end_time = time.time()  # Registra el tiempo después de enviar el mensaje
-    #elapsed_time = end_time - start_time  # Calcula el tiempo transcurrido
-    #print(f"Mensaje {func} enviado, tardó {elapsed_time * 1000} milisegundos")  # Multiplícalo por 1000 para convertir a milisegundos
 
 
 ping_counter = 1  # Define una variable global para contar los pings
@@ -100,13 +97,14 @@ def sendPingPacket(ws):
     ping_message = f"~h~{ping_counter}"
     ping_packet = f"~m~{len(ping_message)}~m~{ping_message}"
     ws.send(ping_packet)
-    #print(f"Enviado mensaje ping: {ping_packet}")  # Añade este print
+    ##print(f"Enviado mensaje ping: {ping_packet}")  # Añade este #print
     ping_counter += 1
 
 
 def process_message(msg, prices):
     try:
         jsonRes = json.loads(msg)
+        print("jsonRes", jsonRes)
         if jsonRes["m"] == "qsd":
             try:
                 symbol = jsonRes["p"][1]["n"]
@@ -117,8 +115,9 @@ def process_message(msg, prices):
                     value = jsonRes["p"][1]["v"].get(key)
                     if value is not None:
                         prices[symbol][key] = value
-                print("precios",json.dumps(prices))
-                server.send_message_to_all(json.dumps(prices))
+                #print("precios",json.dumps(prices))
+                if len(prices)>80:
+                    server.send_message_to_all(json.dumps(prices))
             except KeyError:
                 print("Could not find key in message:")
     except json.JSONDecodeError:
@@ -141,19 +140,19 @@ def getSymbolId(data):
         # If there are no contracts, just get the 'symbol' key
         symbols.append(f"{data['exchange'].upper()}:{data['symbol'].upper()}")
             
-    print(f"Symbols: {symbols}")  # Print the symbols
+    #print(f"Symbols: {symbols}")  # #print the symbols
     return symbols
 
 
 def socketJob(ws):
-    print("entrando a socket job")
+    #print("entrando a socket job")
     prices = {}  
     buffer = ""  
     last_ping_time = time.time()  # Registra el tiempo del último ping enviado
     result = None
 
     while True:
-        print("entrando al ciclo de socket job")
+        #print("entrando al ciclo de socket job")
         try:
             current_time = time.time()  # Registra el tiempo actual
             # Comprueba si ha pasado un minuto desde el último ping
@@ -162,7 +161,7 @@ def socketJob(ws):
                 last_ping_time = current_time  # Actualiza el tiempo del último ping enviado
 
             result = ws.recv()
-           # print(f"Recibido: {result}")  # Añade este print
+           # #print(f"Recibido: {result}")  # Añade este #print
             messages = result.split("~m~")
             messages = [msg for msg in messages if msg]
 
@@ -172,21 +171,21 @@ def socketJob(ws):
                     process_message(msg, prices)
                     #end_time = time.time()
                     #elapsed_time = end_time - start_time
-                    #print(f"Tiempo: {elapsed_time * 1000} ms")
+                    ##print(f"Tiempo: {elapsed_time * 1000} ms")
                     
               
 
         except KeyboardInterrupt:
-            #print("\nGoodbye!")
+            ##print("\nGoodbye!")
             server.shutdown()
             exit(0)
         except WebSocketConnectionClosedException:
-            print("La conexión con el WebSocket se ha cerrado. Reintentando en 5 segundos...")
+            #print("La conexión con el WebSocket se ha cerrado. Reintentando en 5 segundos...")
             time.sleep(5)  # Wait for 5 seconds before retrying
             ws = create_websocket_connection()  # Re-create the connection
             continue
         except Exception as e:
-            print(f"ERROR: {e}\nTradingView message: {result}")
+            print(f"ERROR: {e}\nTradingView message: ")
             continue
 
 def sendCreateSeriesMessage(ws, session, params):
@@ -214,13 +213,12 @@ def main(pairs):
     ws = create_websocket_connection()
     contador = 0
     while True:  # Keep the connection alive
-        print("contador: ", contador)
+        #print("contador: ", contador)
         try:
             session = generateSession()
-            print("session: ",session)
-
+            #print("session: ",session)
             sendMessage(ws, "quote_create_session", [session])
-            print("Sent quote_create_session")
+            #print("Sent quote_create_session")
 
             sendMessage(ws, "quote_set_fields", [session, 'base-currency-logoid', 'ch', 'chp', 'currency-logoid', 'currency_code', 'current_session', 'description', 'exchange', 'format', 'fractional', 'is_tradable', 'language', 'local_description', 'logoid', 'lp', 'lp_time', 'minmov', 'minmove2', 'original_name', 'pricescale', 'pro_name', 'short_name', 'type', 'update_mode', 'volume', 'ask', 'bid', 'fundamentals', 'high_price', 'low_price', 'open_price', 'prev_close_price', 'rch', 'rchp', 'rtc', 'rtc_time', 'status', 'industry', 'basic_eps_net_income', 'beta_1_year', 'market_cap_basic', 'earnings_per_share_basic_ttm', 'price_earnings_ttm', 'sector', 'dividends_yield', 'timezone', 'country_code', 'provider_id']) 
 
@@ -241,29 +239,29 @@ def main(pairs):
                 # Add all the symbols to the session
                 for symbol_id in symbol_ids:
                     sendMessage(ws, "quote_add_symbols", [session, symbol_id])
-                    print(f"Sent quote_add_symbols with {symbol_id}")
+                    #print(f"Sent quote_add_symbols with {symbol_id}")
 
                     # Generate a new chart session for each symbol
-                    chart = chartSession()
-                    print("chart ",chart)
+                  #  chart = chartSession()
+                    #print("chart ",chart)
 
                     # Create a new chart session for each symbol
-                    sendMessage(ws, "chart_create_session", [chart, ""])  
-                    print("Sent chart_create_session")
+                  #  sendMessage(ws, "chart_create_session", [chart, ""])  
+                    #print("Sent chart_create_session")
 
-                    sendMessage(ws, "resolve_symbol", [chart, symbol_name, symbol_id])
-                    print(f"Sent resolve_symbol with {symbol_id}")
+                 #   sendMessage(ws, "resolve_symbol", [chart, symbol_name, symbol_id])
+                    #print(f"Sent resolve_symbol with {symbol_id}")
 
-                    sendMessage(ws, "create_series", [chart, f"sds_{i+1}", f"s{i+1}", symbol_name, "1D", 10, ""])
-                    print("Sent historical")
-                print("se acabaron los simbolos")
-            print("se acabaron los pairs")
+                   # sendMessage(ws, "create_series", [chart, f"sds_{i+1}", f"s{i+1}", symbol_name, "1D", 10, ""])
+                    #print("Sent historical")
+                #print("se acabaron los simbolos")
+            #print("se acabaron los pairs")
 
 
             socketJob(ws)
 
         except Exception as e:
-            print(f"ERROR: {e}")
+            #print(f"ERROR: {e}")
             time.sleep(5)
             ws = create_websocket_connection()
             continue

@@ -99,51 +99,39 @@ class HistoricoTV():
             self.sendMessage(ws, "quote_create_session", [session])
             print("Sent quote_create_session")
 
-            self.sendMessage(ws, "quote_set_fields", [session, 'base-currency-logoid', 'ch', 'chp', 'currency-logoid', 'currency_code', 'current_session', 'description', 'exchange', 'format', 'fractional', 'is_tradable', 'language', 'local_description', 'logoid', 'lp', 'lp_time', 'minmov', 'minmove2', 'original_name', 'pricescale', 'pro_name', 'short_name', 'type', 'update_mode', 'volume', 'ask', 'bid', 'fundamentals', 'high_price', 'low_price', 'open_price', 'prev_close_price', 'rch', 'rchp', 'rtc', 'rtc_time', 'status', 'industry', 'basic_eps_net_income', 'beta_1_year', 'market_cap_basic', 'earnings_per_share_basic_ttm', 'price_earnings_ttm', 'sector', 'dividends_yield', 'timezone', 'country_code', 'provider_id']) 
-
+           
             # For each pair, get all the symbols (including contracts) and add them to the session
             for i, pair in enumerate(pairs):
-                # Split the pair into exchange and symbol
-                exchange, symbol = pair.split(':')
-                
                 # Generate a unique symbol name for this pair
                 symbol_name = f"sds_sym_{i+1}"
 
-                # Search for the symbol in the specified market category
-                data = self.search(exchange, symbol)
+                # No need to search pair from specified market category, using pair as symbol_id directly
+                symbol_id = pair.upper()
+                self.sendMessage(ws, "quote_add_symbols", [session, symbol_id])
+                print(f"Sent quote_add_symbols with {symbol_id}")
 
-                # Get all the symbol IDs from the response
-                symbol_ids = self.getSymbolId(data)
-                print("symbol_ids", symbol_ids)
-                # Add all the symbols to the session
-                for symbol_id in symbol_ids:
-                    self.sendMessage(ws, "quote_add_symbols", [session, symbol_id])
-                    print(f"Sent quote_add_symbols with {symbol_id}")
+                # generate new chart session for each pair
+                chart = self.chartSession()
+                print("chart ",chart)
 
-                    # Generate a new chart session for each symbol
-                    chart = self.chartSession()
-                    print("chart ",chart)
+                # create new chart session for each pair
+                self.sendMessage(ws, "chart_create_session", [chart, ""])  
+                print("Sent chart_create_session")
 
-                    # Create a new chart session for each symbol
-                    self.sendMessage(ws, "chart_create_session", [chart, ""])  
-                    print("Sent chart_create_session")
+                self.sendMessage(ws, "resolve_symbol", [chart, symbol_name, symbol_id])
+                print(f"Sent resolve_symbol with {symbol_id}")
 
-                    self.sendMessage(ws, "resolve_symbol", [chart, symbol_name, symbol_id])
-                    print(f"Sent resolve_symbol with {symbol_id}")
-
-                    self.sendMessage(ws, "create_series", [chart, f"sds_{i+1}", f"s{i+1}", symbol_name, "1D", limit, ""])
-                    print("Sent historical")
+                self.sendMessage(ws, "create_series", [chart, f"sds_{i+1}", f"s{i+1}", symbol_name, "1D", limit, ""])
+                print("Sent historical")
                 print("se acabaron los simbolos")
             print("se acabaron los pairs")
+            
             response = await self.escuchar_socket(ws, pair)
             # Start receiving historical data
-            
-            
             return response
 
         except Exception as e:
             print(f"ERROR: {e}")
-
     async def escuchar_socket(self, ws, pair):
         try:
             response = {}
@@ -159,11 +147,13 @@ class HistoricoTV():
                     if msg.startswith("{"):
                         res, result = self.process_history_message(msg, pair)
                         if res:
+                            print("si hay res true")
                             response = result 
                             r = True
                             print("WebSocket connection closed.")
                             break 
                 if r:
+                    print("saliendo del ciclo")
                     break
                 
             return response
@@ -172,14 +162,17 @@ class HistoricoTV():
             return None
 
     def process_history_message(self, msg,pair):
-       # log.info(f"llego mensaje de socket pair: {pair} :{msg} ")
+        self.log.info(f"llego mensaje de socket pair: {pair} :{msg} ")
         try:
             json_res = json.loads(msg)
             if json_res["m"] == "timescale_update":
                 if "sds_1" in json_res["p"][1]:  # If the 'sds_1' key exists in the message. "s" trae la data
                     historical_data = json_res["p"][1]["sds_1"]["s"]
                     formatted_data = self.format_historical_data(historical_data)
+                    self.log.info(f"formatted_data", formatted_data)
                     return True, formatted_data
+            elif json_res["m"] == "symbol_error":
+                return True, {"msg":"symbol_error" }
             return False, {}
         except json.JSONDecodeError:
             print(f"Failed to decode JSON message: {msg}")

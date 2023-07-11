@@ -142,6 +142,7 @@ class FixController:
         pairs.append(symbol)
         his = HistoricoTV()
         result = await asyncio.create_task(his.get_data_for_symbol(pairs, limit))
+        print("result result", result)
         return jsonify(result)
 
     async def suscribir_mercado():

@@ -15,6 +15,6 @@ async def main(symbol):
 
 
 if __name__ == "__main__":
-    pairs = ["SP:SPX"]
+    pairs = ["CBOT_DL:ZSN2022"]
     asyncio.run(main(pairs))
 
