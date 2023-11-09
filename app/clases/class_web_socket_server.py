@@ -4,7 +4,7 @@ from urllib.parse import urlparse, parse_qs
 from threading import Thread
 
 class WebSocketServer(Thread):
-    def __init__(self, host, port):
+    def __init__(self, host, port, socketMessages):
         Thread.__init__(self)
         """
         Constructor de la clase WebSocketServer.
@@ -16,6 +16,9 @@ class WebSocketServer(Thread):
         self.host = host
         self.port = port
         self.clients = {}
+        self.clientsFront = {}
+        self.socketMessages = socketMessages
+        self.loop = None
 
     def run(self):
         """
@@ -23,6 +26,7 @@ class WebSocketServer(Thread):
         """
         print("start cola")
         loop = asyncio.new_event_loop()# creo un nuevo evento para asyncio y asi ejecutar todo de aqui en adelante con async await 
+        self.loop = loop
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.run_forever())#ejecuto la funcion q quiero
         loop.close()#cierro el evento
@@ -42,6 +46,12 @@ class WebSocketServer(Thread):
         query = urlparse(path).query
         params = parse_qs(query)
         client_id = params.get('client_id', [None])[0]
+        isClientFront=0
+        front = params.get('front', [None])[0]
+        if front:
+            isClientFront = 1
+        if isClientFront==1:
+            self.clientsFront[client_id] = websocket
         print(f"Nuevo cliente conectado con ID {client_id}")
 
         # Agregar el cliente a la lista de clientes
@@ -50,12 +60,15 @@ class WebSocketServer(Thread):
         try:
             async for message in websocket:
                 print(f"Mensaje recibido de cliente con ID {client_id}: {message}")
-                # Responder al cliente con el mismo mensaje recibido
-                await websocket.send(message)
+                # enviar a procesar el mensaje en una tarea aparte para no bloquear el hilo principal
+                asyncio.create_task(self.socketMessages.process_message(message))
+            #    await websocket.send(message)
         except websockets.exceptions.ConnectionClosedError:
             print(f"Cliente con ID {client_id} desconectado")
             # Eliminar el cliente de la lista de clientes
             del self.clients[client_id]
+            if client_id in self.clientsFront:
+                del self.clientsFront[client_id]
 
     async def send_message(self, client_id, message):
         """
@@ -84,6 +97,16 @@ class WebSocketServer(Thread):
         for websocket in self.clients.values():
             await websocket.send(message)
 
+    def broadcast_not_await_front(self, message):
+        """
+        Enviar un mensaje a todos los clientes conectados.
+
+        Args:
+        - message (str): mensaje que se enviará a todos los clientes.
+        """
+        # Enviar un mensaje a todos los clientes conectados
+        for websocket in self.clientsFront.values():
+            self.loop.call_soon_threadsafe(asyncio.ensure_future, websocket.send(message))
 
     async def run_forever(self):
         """

@@ -5,6 +5,8 @@ import asyncio
 import logging
 from threading import Thread
 from app.WebSocket.broadcastWebSocket import socketServer
+from app.clases.class_socket_messages import socketMessages
+from app.clases.class_web_socket_server import WebSocketServer
 #class main para quickfix 
 class MainTask():
     def __init__(self, config_file, market, user, passwd, account, target, accountFixId, puertows):
@@ -22,9 +24,11 @@ class MainTask():
         self.storefactory = fix.FileStoreFactory(config_file)
         self.logfactory = fix.FileLogFactory(config_file)
         self.application = Application(self.market, self.user, self.passwd, self.account)
-        self.server_md = socketServer('127.0.0.1', int(puertows), self.application)
+        self.socketMessages = socketMessages(self.application)
+        self.server_md = WebSocketServer('127.0.0.1', int(puertows), self.socketMessages)
         self.server_md.start()
         self.application.server_md = self.server_md
+        self.socketMessages.setServer(self.server_md)
         self.initiator = fix.SocketInitiator(self.application, self.storefactory, self.settings, self.logfactory)
         self.threadCola = None
         self.stopCola = asyncio.Event()

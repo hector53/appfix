@@ -150,7 +150,6 @@ class FixController:
         print("suscribir mercado: ")
         req_obj = request.get_json()
         print("req", req_obj)
-        
         symbols = req_obj["symbols"]
         user_fix = req_obj["user_fix"]
         status = {"status": False}
@@ -162,7 +161,6 @@ class FixController:
                     depth=5, updateType=0)
         return jsonify(status)
         
-
     def ciclo_infinito(id):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
