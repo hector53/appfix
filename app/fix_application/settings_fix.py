@@ -6,8 +6,8 @@ def config_fix_settings(SocketConnectPort, BeginString, SenderCompID, TargetComp
     FileStorePath=./Sessions/
     UseLocalTime=Y
     UseDataDictionary=Y
-    AppDataDictionary=conf\spec\FIX50SP2_rofex.xml
-    TransportDataDictionary=conf\spec\FIXT11.xml
+    AppDataDictionary=conf/spec/FIX50SP2_rofex.xml
+    TransportDataDictionary=/home/fintelligentia/rofex/appfix/conf/spec/FIXT11.xml
     StartTime=00:00:00
     EndTime=00:00:00
     ValidateUserDefinedFields=N
@@ -45,8 +45,8 @@ def config_fix_settings(SocketConnectPort, BeginString, SenderCompID, TargetComp
     defaultDic.setString("FileStorePath", "non")
     defaultDic.setBool("UseLocalTime", True)
     defaultDic.setBool("UseDataDictionary", True)
-    defaultDic.setString("AppDataDictionary", "conf\spec\FIX50SP2_rofex.xml")
-    defaultDic.setString("TransportDataDictionary", "conf\spec\FIXT11.xml")
+    defaultDic.setString("AppDataDictionary", "conf/spec/FIX50SP2_rofex.xml")
+    defaultDic.setString("TransportDataDictionary", "conf/spec/FIXT11.xml")
     defaultDic.setString("StartTime", "00:00:00")
     defaultDic.setString("EndTime", "00:00:00")
     defaultDic.setBool("ValidateUserDefinedFields", False)

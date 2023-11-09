@@ -552,8 +552,8 @@ class Application(fix.Application):
        # self.send_to_bot(details, accountIDMsg, 4)#4=order cancel reject 
 
        
-     #   taskBroadcast = {"type": 5, "data":details}
-    #    self.server_md.broadcast(str(taskBroadcast))
+        taskBroadcast = {"type": 5, "data":details}
+        self.server_md.broadcast(str(taskBroadcast))
 
         #actualizamos variable en espera para orden manual
         if clientOrderID in self.clOrdIdEsperar:
@@ -904,20 +904,20 @@ class Application(fix.Application):
                    'typeFilled': 1, 
                    'reject': 'false'
                    }
-        #logfix.info("Order Filled/Partially Filled Response: %s" % details)
+        logfix.info("Order Filled/Partially Filled Response: %s" % details)
        # self.send_to_bot(details, accountFixMsg, 3)#type3=order filled o part
 
         #actualizamos variable en espera
-        if clientOrderID in self.clOrdIdEsperar:
-            self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
-            self.clOrdIdEsperar[clientOrderID]["data"] = details
-            self.clOrdIdEsperar[clientOrderID]["lastQty"] = self.clOrdIdEsperar[clientOrderID]["lastQty"] + details["lastQty"]
+       # if clientOrderID in self.clOrdIdEsperar:
+        ##    self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
+         #   self.clOrdIdEsperar[clientOrderID]["data"] = details
+          #  self.clOrdIdEsperar[clientOrderID]["lastQty"] = self.clOrdIdEsperar[clientOrderID]["lastQty"] + details["lastQty"]
 
         newDetails = details
         newDetails["marketLimit"] = "false"
         newDetails["reject"] = "false"
         task = {"type": 1,  "id_bot": 0, "typeOrder": "", "cuenta": "", "details": newDetails, "data":  newDetails}
-        self.server_md.broadcast_not_await_front(str(task))
+        self.server_md.broadcast(str(task))
 
         orderTypeNum = self.getValue(message, fix.OrdType())
 
@@ -1134,9 +1134,9 @@ class Application(fix.Application):
         #logfix.info(            f"onMessage_ExecutionReport_RejectMessageResponse : {str(details)}")
        # self.send_to_bot(details, accountIDMsg, 5)#5=order reject message
         
-     #   # Broadcast JSON to WebSocket
-       # taskBroadcast = {"type": 6, "data":details}
-       # self.server_md.broadcast(str(taskBroadcast))
+        # Broadcast JSON to WebSocket
+        taskBroadcast = {"type": 6, "data":details}
+        self.server_md.broadcast(str(taskBroadcast))
 
         #actualizamos variable en espera para orden manual
         if clientOrderID in self.clOrdIdEsperar:
@@ -2025,7 +2025,7 @@ class Application(fix.Application):
                     response = {
                         "llegoRespuesta": False, "msg": "tiempo excedido, no llego respuesta o algo mas paso"}
                     break
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.5)
         except Exception as e:
             logfix.error(f"error en esperarRespuesta: {e}")
         return response
@@ -2040,7 +2040,7 @@ class Application(fix.Application):
                     #logfix.info(                        f"la suscripcion se completo con exito {codigo}")
                     response = {"status": True}
                     break
-                if contador > 20:  # si paso mas de 10 segundos, no llego la respuesta
+                if contador > 20:  # si paso mas de 30 segundos, no llego la respuesta
                     response = {
                         "status": False, "msg": "tiempo excedido, no llego respuesta o algo mas paso"}
                     break
@@ -2050,7 +2050,7 @@ class Application(fix.Application):
         return response
 
 
-    async def newOrderSingle(self, clOrdId, symbol, side, quantity, price=0, orderType=2, idTriangulo=0, cuenta=""):
+    def newOrderSingle(self, clOrdId, symbol, side, quantity, price=0, orderType=2, idTriangulo=0, cuenta=""):
         #logfix.info(            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
         """
         New Order - Single
@@ -2124,12 +2124,12 @@ class Application(fix.Application):
         print("enviando orden ", msgE)
         fix.Session.sendToTarget(msg)
         #ahora vamos a abrir en un nuevo hilo la espera 
-        task = asyncio.create_task(self.esperarRespuesta(clOrdId, "newOrder"))
+       # task = asyncio.create_task(self.esperarRespuesta(clOrdId, "newOrder"))
         # Esperar a que la tarea asincrónica termine y devuelva su resultado
-        response = await task
-        return response
+        #response = await task
+        #return response
 
-    async def orderCancelRequest(self, clOrdId, OrigClOrdID, side, quantity, symbol,  cuenta=""):
+    def orderCancelRequest(self, clOrdId, OrigClOrdID, side, quantity, symbol,  cuenta=""):
         #logfix.info(            f"orderCancelRequest: {clOrdId} {OrigClOrdID} {side} {quantity} {symbol} ")
         """
         Order Cancel Request
@@ -2199,12 +2199,12 @@ class Application(fix.Application):
         fix.Session.sendToTarget(msg)
 
         #ahora vamos a abrir en un nuevo hilo la espera 
-        task = asyncio.create_task(self.esperarRespuesta(clOrdId, "newCancel"))
+     #   task = asyncio.create_task(self.esperarRespuesta(clOrdId, "newCancel"))
         # Esperar a que la tarea asincrónica termine y devuelva su resultado
-        response = await task
-        return response
+       # response = await task
+       # return response
 
-    async def orderCancelReplaceRequest(self, clOrdId, orderId, origClOrdId, side,  orderType, symbol, quantity=None, price=None, cuenta=""):
+    def orderCancelReplaceRequest(self, clOrdId, orderId, origClOrdId, side,  orderType, symbol, quantity=None, price=None, cuenta=""):
         #logfix.info(            f"orderCancelReplaceRequest: {clOrdId}, {orderId}, {origClOrdId}, {side}, {orderType}, {symbol}, {quantity}, {price}, {cuenta}")
         """
         Order Cancel/Replace Request
@@ -2288,10 +2288,10 @@ class Application(fix.Application):
 
         fix.Session.sendToTarget(msg)
         #ahora vamos a abrir en un nuevo hilo la espera 
-        task = asyncio.create_task(self.esperarRespuesta(clOrdId, "ModifyOrder"))
+     #   task = asyncio.create_task(self.esperarRespuesta(clOrdId, "ModifyOrder"))
         # Esperar a que la tarea asincrónica termine y devuelva su resultado
-        response = await task
-        return response
+      #  response = await task
+       # return response
 
     def orderStatusRequest(self, orderId, symbol, side):
         """
@@ -2536,11 +2536,11 @@ class Application(fix.Application):
         # -----------------------------------------
 
         fix.Session.sendToTarget(msg)
-        response = {"status": False}
         if subscription<2:
             task = asyncio.create_task(self.esperar_respuesta_mercado(unicID))
             # Esperar a que la tarea asincrónica termine y devuelva su resultado
             response = await task
+        response = {"status": True}
         return response
 
     def securityListRequest(self, criteria=4, symbol="", cficode=None, subscription=fix.SubscriptionRequestType_SNAPSHOT):

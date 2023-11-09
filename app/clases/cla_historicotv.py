@@ -125,7 +125,6 @@ class HistoricoTV():
                 print("Sent historical")
                 print("se acabaron los simbolos")
             print("se acabaron los pairs")
-            
             response = await self.escuchar_socket(ws, pair)
             # Start receiving historical data
             return response
@@ -147,13 +146,11 @@ class HistoricoTV():
                     if msg.startswith("{"):
                         res, result = self.process_history_message(msg, pair)
                         if res:
-                            print("si hay res true")
                             response = result 
                             r = True
                             print("WebSocket connection closed.")
                             break 
                 if r:
-                    print("saliendo del ciclo")
                     break
                 
             return response
@@ -162,17 +159,14 @@ class HistoricoTV():
             return None
 
     def process_history_message(self, msg,pair):
-        self.log.info(f"llego mensaje de socket pair: {pair} :{msg} ")
+       # log.info(f"llego mensaje de socket pair: {pair} :{msg} ")
         try:
             json_res = json.loads(msg)
             if json_res["m"] == "timescale_update":
                 if "sds_1" in json_res["p"][1]:  # If the 'sds_1' key exists in the message. "s" trae la data
                     historical_data = json_res["p"][1]["sds_1"]["s"]
                     formatted_data = self.format_historical_data(historical_data)
-                    self.log.info(f"formatted_data", formatted_data)
                     return True, formatted_data
-            elif json_res["m"] == "symbol_error":
-                return True, {"msg":"symbol_error" }
             return False, {}
         except json.JSONDecodeError:
             print(f"Failed to decode JSON message: {msg}")
@@ -185,13 +179,15 @@ class HistoricoTV():
         formatted_data = []
         for data in historical_data:
             record = {
-                            "Timestamp": data['v'][0],
-                            "Open": data['v'][1],
-                            "High": data['v'][2],
-                            "Low": data['v'][3],
-                            "Close": data['v'][4],
-                            "Volume": data['v'][5]
-                        }
+                "Timestamp": data['v'][0],
+                "Open": data['v'][1],
+                "High": data['v'][2],
+                "Low": data['v'][3],
+                "Close": data['v'][4]
+            }
+            # Check if 'Volume' exists
+            if len(data['v']) > 5:
+                record["Volume"] = data['v'][5]
             formatted_data.append(record)
         
         return formatted_data

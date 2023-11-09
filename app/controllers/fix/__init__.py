@@ -142,7 +142,6 @@ class FixController:
         pairs.append(symbol)
         his = HistoricoTV()
         result = await asyncio.create_task(his.get_data_for_symbol(pairs, limit))
-        print("result result", result)
         return jsonify(result)
 
     async def suscribir_mercado():
@@ -150,6 +149,7 @@ class FixController:
         print("suscribir mercado: ")
         req_obj = request.get_json()
         print("req", req_obj)
+        
         symbols = req_obj["symbols"]
         user_fix = req_obj["user_fix"]
         status = {"status": False}
@@ -161,6 +161,7 @@ class FixController:
                     depth=5, updateType=0)
         return jsonify(status)
         
+
     def ciclo_infinito(id):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -427,6 +428,7 @@ class FixController:
             if securitys:
                 UtilsController.guardar_security_in_fix(securitys["data"], id_fix)
                 response = {"securitys": str(securitys["data"]).replace("'", '"'), "date": str(datetime.now()), "status": True}
+                log.info(f"response: {response}")
                 return jsonify(response)
             fixM.main_tasks[id_fix].application.securityListRequest(symbol="")
             response = {"status": True}
@@ -452,4 +454,5 @@ class FixController:
 
         else:
             response = {"status": False}
+        log.info(f"response: {response}")
         return jsonify(response)
