@@ -563,7 +563,7 @@ class Application(fix.Application):
 
     def onMessage_ExecutionReport_New(self, message, session):
         msg = message.toString().replace(__SOH__, "|")
-        #logfix.info("R new order>> (%s)" % msg)
+        logfix.info("R new order>> (%s)" % msg)
         
         """
         onMessage - Execution Report - New
@@ -2051,7 +2051,7 @@ class Application(fix.Application):
 
 
     def newOrderSingle(self, clOrdId, symbol, side, quantity, price=0, orderType=2, idTriangulo=0, cuenta=""):
-        #logfix.info(            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
+        logfix.info(            f"newOrderSingle: {clOrdId} {symbol} {side} {quantity} {price} {orderType} {idTriangulo} {cuenta}")
         """
         New Order - Single
         
