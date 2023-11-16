@@ -204,6 +204,7 @@ class FixController:
             return 'El ciclo infinito no está en ejecución'
 
     async def iniciar_socket_bot(url, user, account, accountFixId, puertows ):
+        import traceback
         payload = {
             "user": user, 
             "account": account, 
@@ -221,9 +222,11 @@ class FixController:
                 return False
         except requests.exceptions.HTTPError as err:
             print("Error HTTP: ", err)
+            print(traceback.format_exc())
             return False
         except Exception as err:
             print("Ocurrió un error: ", err)
+            print(traceback.format_exc())
             return False
 
     async def iniciar_fix_new():
