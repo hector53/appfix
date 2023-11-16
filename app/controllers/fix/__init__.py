@@ -327,8 +327,6 @@ class FixController:
         id_user = req_obj['user']["id"]
         log.info(f"fixM: {fixM.tasks}")
 
-        
-
         getFixTask = await fixM.get_fixTask_by_id_user(id_fix)
         if getFixTask:
             print("si existe a session")
@@ -345,7 +343,7 @@ class FixController:
                         "user": id_fix, 
                         "account": bot["cuenta"]
                     }
-                    response =  await UtilsController.detener_bot_by_id(fix, bot["_id"])
+               #     response =  await UtilsController.detener_bot_by_id(fix, bot["_id"])
             await getFixTask.stopColaFix()
             getFixTask.application.logout()
             getFixTask.initiator.stop()

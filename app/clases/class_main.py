@@ -54,10 +54,10 @@ class MainTask():
            # self.threadCola = Thread(target=self.startCola)
           #  self.threadCola.start()
             #logfix.info(f"user: {self.user}")
-            if self.user != "FIX_BZ_ESCODA":
+          #  if self.user != "FIX_BZ_ESCODA":
                 #logfix.info(f"nmo es un usuario balanc")
-                self.threadBalance = Thread(target=self.startLoopBalance)
-                self.threadBalance.start()
+           #     self.threadBalance = Thread(target=self.startLoopBalance)
+            #    self.threadBalance.start()
             
         finally:
             self.log.error("se cerro el run d ela tarea main task")

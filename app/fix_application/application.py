@@ -1168,7 +1168,7 @@ class Application(fix.Application):
         """
 
         msg = message.toString().replace(__SOH__, "|")
-        #logfix.info("onMessage_MarketDataSnapshotFullRefresh, R app (%s)" % msg)
+        logfix.info("onMessage_MarketDataSnapshotFullRefresh, R app (%s)" % msg)
 
         data = {}
         data['type'] = 'book'
