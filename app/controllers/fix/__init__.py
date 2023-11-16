@@ -211,7 +211,7 @@ class FixController:
             "accountFixId": accountFixId,
             "puertows": puertows
         }
-        print("entrando a iniciar socket bot")
+        print("entrando a iniciar socket bot", payload)
         try:
             headers = {"Content-Type": "application/json"}
             response = requests.post(f"{url}/api/iniciar_fix/new", data=json.dumps(payload), headers=headers)
