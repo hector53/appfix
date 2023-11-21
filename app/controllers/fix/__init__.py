@@ -357,7 +357,7 @@ class FixController:
             getFixTask.initiator.stop()
 
             getFixTask.threadFix.join()
-            getFixTask.threadBalance.join()
+           # getFixTask.threadBalance.join()
             getFixTask.server_md.close()
             log.info(f"fixM: {fixM.tasks}")
             log.info(f"fixM: {fixM.main_tasks}")

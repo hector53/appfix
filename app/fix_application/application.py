@@ -64,6 +64,7 @@ class Application(fix.Application):
         self.suscripcionSymbol = {}
         self.suscripcionId = {}
         self.lastBotIDC = 0
+        self.testEjectuado = False
         self.triangulos = {}
         self.rest = RofexAPI("asd", "asd")
         self.botManager = None
@@ -203,7 +204,7 @@ class Application(fix.Application):
 
     def toApp(self, message, session):
         msg = message.toString().replace(__SOH__, "|")
-        #logfix.info("S toApp>> (%s)" % msg)
+        logfix.info("S toApp>> (%s)" % msg)
         # self.insert_log(msg)
         """
         toApp is a callback for application messages that are being sent to a counterparty.
@@ -230,7 +231,7 @@ class Application(fix.Application):
 
     def fromApp(self, message, session):
         msg = message.toString().replace(__SOH__, "|")
-        #logfix.info("R fromApp>> (%s)" % msg)
+        logfix.info("R fromApp>> (%s)" % msg)
         
    
       #  task = {"message": message, "session": session}
@@ -447,7 +448,7 @@ class Application(fix.Application):
                    'marketSegmentID': self.getValue(message, fix.MarketSegmentID())
                    }
         task = {"type": 0, "details": details}
-        self.message_queue.put_nowait(task)
+        #self.message_queue.put_nowait(task)
         #logfix.info(f"onMessage - News: {details}")
         print(details)
 
@@ -847,6 +848,17 @@ class Application(fix.Application):
             self.clOrdIdEsperar[clientOrderID]["llegoRespuesta"] = True
             self.clOrdIdEsperar[clientOrderID]["data"] = details
 
+    def ejecutar_test_ordenes(self):
+        logfix.info("ejecutar_test_ordenes")
+        #quiero crear una orden de venta aqui  TRI.ROS/ENE24 y una orden de compra aqui TRI.ROS/DIC23/ENE24
+        clOrdId = self.getNextOrderID("test", "211090")
+        clOrdId2 = self.getNextOrderID("test2", "211090")
+        priceFuturo2 = 249
+        pricePase = -1
+        self.newOrderSingle(clOrdId, "TRI.ROS/ENE24", 1, 1,priceFuturo2, 2,0,self.account )
+        self.newOrderSingle(clOrdId2, "TRI.ROS/DIC23/ENE24", 2, 1,pricePase, 2,0,self.account )
+        self.testEjectuado = True
+
     def onMessage_ExecutionReport_OrderFilledPartiallyFilledResponse(self, message, session):
         """
         onMessage - Execution Report - Order Filled/Partially Filled Response
@@ -906,6 +918,9 @@ class Application(fix.Application):
                    }
         logfix.info("Order Filled/Partially Filled Response: %s" % details)
        # self.send_to_bot(details, accountFixMsg, 3)#type3=order filled o part
+        # Broadcast JSON to WebSocket
+       # if self.testEjectuado == False:
+           # self.ejecutar_test_ordenes()
 
         #actualizamos variable en espera
        # if clientOrderID in self.clOrdIdEsperar:
