@@ -33,7 +33,7 @@ mongo = PyMongo(app)
 sesionesFix = {}
 thread = {}
 fixM = fixManager()
-urlAppbots = "http://190.97.249.43:4000"
+urlAppbots = "http://127.0.0.1:4000"
 
 from app.request import *
 
